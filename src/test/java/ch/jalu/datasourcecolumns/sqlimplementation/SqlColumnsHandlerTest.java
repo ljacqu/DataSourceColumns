@@ -4,6 +4,7 @@ import ch.jalu.datasourcecolumns.Column;
 import ch.jalu.datasourcecolumns.ColumnType;
 import ch.jalu.datasourcecolumns.SampleColumns;
 import ch.jalu.datasourcecolumns.SampleContext;
+import ch.jalu.datasourcecolumns.SampleDependent;
 import ch.jalu.datasourcecolumns.StandardTypes;
 import ch.jalu.datasourcecolumns.TestUtils;
 import ch.jalu.datasourcecolumns.data.DataSourceValue;
@@ -296,6 +297,28 @@ public class SqlColumnsHandlerTest {
     }
 
     @Test
+    public void shouldUpdateWithDependentObject() throws SQLException {
+        // given
+        context.setEmptyOptions(true, false, false);
+        SampleDependent dependent = new SampleDependent();
+        dependent.setName("New name");
+        dependent.setEmail("newmail@example.com");
+        dependent.setLastLogin(2305982L);
+        dependent.setIp(null);
+
+        // when
+        boolean result = handler.update(9, dependent,
+            SampleColumns.NAME, SampleColumns.EMAIL, SampleColumns.LAST_LOGIN, SampleColumns.IP);
+
+        // then
+        assertThat(result, equalTo(true));
+        assertThat(handler.retrieve(9, SampleColumns.NAME).getValue(), equalTo(dependent.getName()));
+        assertThat(handler.retrieve(9, COL_EMAIL).getValue(), equalTo("other@test.tld"));
+        assertThat(handler.retrieve(9, SampleColumns.LAST_LOGIN).getValue(), equalTo(2305982L));
+        assertThat(handler.retrieve(9, SampleColumns.IP).getValue(), nullValue());
+    }
+
+    @Test
     public void shouldInsertValues() throws SQLException {
         // given
         UpdateValues<SampleContext> values =
@@ -363,6 +386,33 @@ public class SqlColumnsHandlerTest {
         } catch (IllegalStateException e) {
             assertThat(e.getMessage(), startsWith("Cannot perform insert when all columns are empty"));
         }
+    }
+
+    @Test
+    public void shouldPerformInsertWithDependentObject() throws SQLException {
+        // given
+        context.setEmptyOptions(true, false, false);
+        SampleDependent dependent = new SampleDependent();
+        dependent.setId(155);
+        dependent.setName("Jason");
+        dependent.setEmail("test@test.tld");
+        dependent.setLastLogin(1354091L);
+        dependent.setIsLocked(1);
+        dependent.setIsActive(1);
+        SampleColumns<?>[] columns = { SampleColumns.ID, SampleColumns.NAME, SampleColumns.EMAIL,
+            SampleColumns.IS_LOCKED, SampleColumns.IS_ACTIVE, SampleColumns.LAST_LOGIN };
+
+        // when
+        boolean result = handler.insert(dependent, columns);
+
+        // then
+        assertThat(result, equalTo(true));
+        assertThat(handler.retrieve(155, SampleColumns.NAME).getValue(), equalTo("Jason"));
+        assertThat(handler.retrieve(155, SampleColumns.EMAIL).getValue(), nullValue());
+        assertThat(handler.retrieve(155, SampleColumns.IP).getValue(), nullValue());
+        assertThat(handler.retrieve(155, SampleColumns.IS_LOCKED).getValue(), equalTo(1));
+        assertThat(handler.retrieve(155, SampleColumns.IS_ACTIVE).getValue(), equalTo(1));
+        assertThat(handler.retrieve(155, SampleColumns.LAST_LOGIN).getValue(), equalTo(1354091L));
     }
 
     @Test

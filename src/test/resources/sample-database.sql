@@ -6,7 +6,6 @@ create table testingdata (
   is_locked tinyint not null,
   is_active tinyint not null,
   last_login bigint,
-  color varchar(16),
   primary key(id)
 );
 
