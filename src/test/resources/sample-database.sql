@@ -4,8 +4,8 @@ create table testingdata (
   ip varchar(15),
   email varchar(100),
   is_locked tinyint not null,
-  is_active tinyint not null,
-  last_login bigint,
+  is_active tinyint not null default 3,
+  last_login bigint default -123,
   primary key(id)
 );
 

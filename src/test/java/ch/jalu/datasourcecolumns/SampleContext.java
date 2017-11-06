@@ -6,6 +6,9 @@ public class SampleContext {
     private boolean isIsLockedEmpty;
     private boolean isLastLoginEmpty;
 
+    private boolean useDefaultForIsActive;
+    private boolean useDefaultForLastLogin;
+
     public String resolveName(SampleColumns<?> col) {
         if (col == SampleColumns.NAME) {
             return "username";
@@ -26,10 +29,25 @@ public class SampleContext {
         }
     }
 
+    public boolean resolveUseDefaultForNull(SampleColumns<?> col) {
+        if (col == SampleColumns.IS_ACTIVE) {
+            return useDefaultForIsActive;
+        } else if (col == SampleColumns.LAST_LOGIN) {
+            return useDefaultForLastLogin;
+        } else {
+            return false;
+        }
+    }
+
     public void setEmptyOptions(boolean isEmailEmpty, boolean isIsLockedEmpty, boolean isLastLoginEmpty) {
         this.isEmailEmpty = isEmailEmpty;
         this.isIsLockedEmpty = isIsLockedEmpty;
         this.isLastLoginEmpty = isLastLoginEmpty;
+    }
+
+    public void setUseDefaults(boolean useDefaultForIsActive, boolean useDefaultForLastLogin) {
+        this.useDefaultForIsActive = useDefaultForIsActive;
+        this.useDefaultForLastLogin = useDefaultForLastLogin;
     }
 
     @Override

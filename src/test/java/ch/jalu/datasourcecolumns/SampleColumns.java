@@ -60,6 +60,11 @@ public final class SampleColumns<T> implements DependentColumn<T, SampleContext,
     }
 
     @Override
+    public boolean useDefaultForNullValue(SampleContext context) {
+        return context.resolveUseDefaultForNull(this);
+    }
+
+    @Override
     public T getValueFromDependent(SampleDependent dependent) {
         return dependentGetter.apply(dependent);
     }

@@ -4,7 +4,6 @@ import ch.jalu.datasourcecolumns.SampleColumns;
 import ch.jalu.datasourcecolumns.SampleContext;
 import ch.jalu.datasourcecolumns.predicate.AlwaysTruePredicate;
 import ch.jalu.datasourcecolumns.predicate.Predicate;
-import ch.jalu.datasourcecolumns.sqlimplementation.PredicateSqlGenerator.WhereClauseResult;
 import org.junit.Test;
 
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.and;
@@ -42,9 +41,9 @@ public class PredicateSqlGeneratorTest {
             .and(notEq(SampleColumns.LAST_LOGIN, 13L));
 
         // when
-        WhereClauseResult result1 = predicateGenerator.generateWhereClause(predicate1);
-        WhereClauseResult result2 = predicateGenerator.generateWhereClause(predicate2);
-        WhereClauseResult result3 = predicateGenerator.generateWhereClause(predicate3);
+        GeneratedSqlWithBindings result1 = predicateGenerator.generateWhereClause(predicate1);
+        GeneratedSqlWithBindings result2 = predicateGenerator.generateWhereClause(predicate2);
+        GeneratedSqlWithBindings result3 = predicateGenerator.generateWhereClause(predicate3);
 
         // then
         assertThat(result1.getGeneratedSql(), equalTo("(is_locked > ?) AND (last_login >= ?)"));
@@ -68,9 +67,9 @@ public class PredicateSqlGeneratorTest {
             .and(notEq(SampleColumns.LAST_LOGIN, 13L));
 
         // when
-        WhereClauseResult result1 = predicateGenerator.generateWhereClause(predicate1);
-        WhereClauseResult result2 = predicateGenerator.generateWhereClause(predicate2);
-        WhereClauseResult result3 = predicateGenerator.generateWhereClause(predicate3);
+        GeneratedSqlWithBindings result1 = predicateGenerator.generateWhereClause(predicate1);
+        GeneratedSqlWithBindings result2 = predicateGenerator.generateWhereClause(predicate2);
+        GeneratedSqlWithBindings result3 = predicateGenerator.generateWhereClause(predicate3);
 
         // then
         assertThat(result1.getGeneratedSql(), equalTo("(1 = 1) AND (last_login >= ?)"));
@@ -94,9 +93,9 @@ public class PredicateSqlGeneratorTest {
             .and(isNull(SampleColumns.IS_LOCKED));
 
         // when
-        WhereClauseResult result1 = predicateGenerator.generateWhereClause(predicate1);
-        WhereClauseResult result2 = predicateGenerator.generateWhereClause(predicate2);
-        WhereClauseResult result3 = predicateGenerator.generateWhereClause(predicate3);
+        GeneratedSqlWithBindings result1 = predicateGenerator.generateWhereClause(predicate1);
+        GeneratedSqlWithBindings result2 = predicateGenerator.generateWhereClause(predicate2);
+        GeneratedSqlWithBindings result3 = predicateGenerator.generateWhereClause(predicate3);
 
         // then
         assertThat(result1.getGeneratedSql(), equalTo("(id IS NULL) OR (username IS NOT NULL)"));
@@ -113,7 +112,7 @@ public class PredicateSqlGeneratorTest {
         Predicate<SampleContext> predicate = new AlwaysTruePredicate<>();
 
         // when
-        WhereClauseResult result = predicateGenerator.generateWhereClause(predicate);
+        GeneratedSqlWithBindings result = predicateGenerator.generateWhereClause(predicate);
 
         // then
         assertThat(result.getGeneratedSql(), equalTo("1 = 1"));

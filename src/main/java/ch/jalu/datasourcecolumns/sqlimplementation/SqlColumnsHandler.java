@@ -9,7 +9,6 @@ import ch.jalu.datasourcecolumns.data.DataSourceValues;
 import ch.jalu.datasourcecolumns.data.DataSourceValuesImpl;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
 import ch.jalu.datasourcecolumns.predicate.Predicate;
-import ch.jalu.datasourcecolumns.sqlimplementation.PredicateSqlGenerator.WhereClauseResult;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,10 +16,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Implementation of {@link ColumnsHandler} for a SQL data source.
@@ -103,6 +103,13 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
     public <T> boolean update(I identifier, Column<T, C> column, T value) throws SQLException {
         if (!column.isColumnUsed(context)) {
             return true;
+        } else if (value == null && column.useDefaultForNullValue(context)) {
+            String sql = "UPDATE " + tableName + " SET " + column.resolveName(context)
+                + " = DEFAULT WHERE " + idColumn + " = ?;";
+            try (PreparedStatement pst = connection.prepareStatement(sql)) {
+                pst.setObject(1, identifier);
+                return performUpdateAction(pst);
+            }
         }
         String sql = "UPDATE " + tableName + " SET " + column.resolveName(context)
             + " = ? WHERE " + idColumn + " = ?;";
@@ -143,7 +150,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
 
     @Override
     public int count(Predicate<C> predicate) throws SQLException {
-        WhereClauseResult whereResult = predicateSqlGenerator.generateWhereClause(predicate);
+        GeneratedSqlWithBindings whereResult = predicateSqlGenerator.generateWhereClause(predicate);
         String sql = "SELECT COUNT(1) FROM " + tableName + " WHERE " + whereResult.getGeneratedSql();
         try (PreparedStatement pst = connection.prepareStatement(sql)) {
             bindValues(pst, 1, whereResult.getBindings());
@@ -163,14 +170,32 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
             return false;
         }
 
+        final GeneratedSqlWithBindings columnSetList = createColumnsListForUpdate(nonEmptyColumns, valueGetter);
         final String sql = "UPDATE " + tableName + " SET "
-            + commaSeparatedList(nonEmptyColumns, colName -> colName + " = ?")
-            + " WHERE " + idColumn + " = ?;";
+            + columnSetList.getGeneratedSql() + " WHERE " + idColumn + " = ?;";
         try (PreparedStatement pst = connection.prepareStatement(sql)) {
-            int index = bindValues(pst, 1, nonEmptyColumns, valueGetter);
+            int index = bindValues(pst, 1, columnSetList.getBindings());
             pst.setObject(index, identifier);
             return performUpdateAction(pst);
         }
+    }
+
+    private <E extends Column<?, C>> GeneratedSqlWithBindings createColumnsListForUpdate(
+        Collection<E> columns, Function<E, Object> valueGetter) {
+
+        final List<Object> bindings = new LinkedList<>();
+        final String sql = columns.stream()
+            .map(column -> {
+                final Object value = valueGetter.apply(column);
+                if (value == null && column.useDefaultForNullValue(context)) {
+                    return column.resolveName(context) + " = DEFAULT";
+                } else {
+                    bindings.add(value);
+                    return column.resolveName(context) + " = ?";
+                }
+            })
+            .collect(Collectors.joining(", "));
+        return new GeneratedSqlWithBindings(sql, bindings);
     }
 
     private <E extends Column<?, C>> boolean performInsert(Collection<E> columns,
@@ -180,13 +205,33 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
             throw new IllegalStateException("Cannot perform insert when all columns are empty: " + columns);
         }
 
+        final GeneratedSqlWithBindings placeholders = createValuePlaceholdersForInsert(nonEmptyColumns, valueGetter);
         final String sql = "INSERT INTO " + tableName + " (" + commaSeparatedList(nonEmptyColumns) + ") "
-            + "VALUES(" + createQuestionMarkList(nonEmptyColumns.size()) + ");";
+            + "VALUES(" + placeholders.getGeneratedSql() + ");";
         try (PreparedStatement pst = connection.prepareStatement(sql)) {
-            bindValues(pst, 1, nonEmptyColumns, valueGetter);
+            bindValues(pst, 1, placeholders.getBindings());
             return performUpdateAction(pst);
         }
     }
+
+    private <E extends Column<?, C>> GeneratedSqlWithBindings createValuePlaceholdersForInsert(
+        Collection<E> columns, Function<E, Object> valueGetter) {
+
+        final List<Object> bindings = new LinkedList<>();
+        final String sql = columns.stream()
+            .map(column -> {
+                final Object value = valueGetter.apply(column);
+                if (value == null && column.useDefaultForNullValue(context)) {
+                    return "DEFAULT";
+                } else {
+                    bindings.add(value);
+                    return "?";
+                }
+            })
+            .collect(Collectors.joining(", "));
+        return new GeneratedSqlWithBindings(sql, bindings);
+    }
+
 
     /**
      * Wraps {@link PreparedStatement#executeUpdate()} for UPDATE and INSERT statements and returns a boolean
@@ -212,52 +257,21 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
      * Creates a comma-separated list with the given columns' names.
      */
     private String commaSeparatedList(Collection<? extends Column<?, C>> columns) {
-        return commaSeparatedList(columns, Function.identity());
-    }
-
-    /*
-     * Creates a comma-separated list with the result of the provided function, to which each column's name is given.
-     * Typically used to generate a portion of an SQL query, e.g. {@code name -> name + " = ?"} to yield something like
-     * "col1 = ?, col2 = ?, col3 = ?" from three columns.
-     */
-    private String commaSeparatedList(Collection<? extends Column<?, C>> columns,
-                                      Function<String, String> columnNameToSql) {
         return columns.stream()
             .map(column -> column.resolveName(context))
-            .map(columnNameToSql)
-            .collect(Collectors.joining(", "));
-    }
-
-    private static String createQuestionMarkList(int elements) {
-        return IntStream.range(0, elements)
-            .mapToObj(i -> "?")
             .collect(Collectors.joining(", "));
     }
 
     /**
-     * Binds the values of the given columns with the provided {@code valueGetter} to the PreparedStatement,
-     * starting from the given index (to allow values to be bound before this method is called).
-     * The ending index is returned (to allow more values to be bound after calling this method).
+     * Binds the given values to the PreparedStatement, starting from the given index (to allow
+     * values to be bound before this method is called). The index at which binding can continue
+     * is returned (to allow more values to be bound after calling this method).
      *
      * @param pst the prepared statement
      * @param startIndex the index at which value binding should begin
-     * @param columns the columns
-     * @param valueGetter function to look up the value to bind, based on the column
-     * @param <E> the column extension type
+     * @param bindings the values to bind
      * @return the index at which binding should continue (if applicable)
      */
-    private <E extends Column<?, C>> int bindValues(PreparedStatement pst,
-                                                    int startIndex,
-                                                    Collection<E> columns,
-                                                    Function<E, Object> valueGetter) throws SQLException {
-        int index = startIndex;
-        for (E column : columns) {
-            pst.setObject(index, valueGetter.apply(column));
-            ++index;
-        }
-        return index;
-    }
-
     private int bindValues(PreparedStatement pst, int startIndex, Collection<Object> bindings) throws SQLException {
         int index = startIndex;
         for (Object binding : bindings) {

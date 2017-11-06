@@ -10,13 +10,14 @@ import ch.jalu.datasourcecolumns.TestUtils;
 import ch.jalu.datasourcecolumns.data.DataSourceValue;
 import ch.jalu.datasourcecolumns.data.DataSourceValues;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -42,6 +43,9 @@ public class SqlColumnsHandlerTest {
     private static final String TABLE_NAME = "testingdata";
     private static final String ID_COLUMN = "id";
 
+    private static final long LAST_LOGIN_DEFAULT = -123L;
+    private static final int IS_ACTIVE_DEFAULT = 3;
+
     // Columns that are not empty for testing
     private static final ColumnImpl<String> COL_EMAIL = new ColumnImpl<>("email", StandardTypes.STRING);
     private static final ColumnImpl<Long> COL_LAST_LOGIN = new ColumnImpl<>("last_login", StandardTypes.LONG);
@@ -53,14 +57,20 @@ public class SqlColumnsHandlerTest {
 
     @Before
     public void setUpConnection() throws Exception {
-        //Class.forName("org.sqlite.JDBC");
+        HikariConfig config = new HikariConfig();
+        config.setDataSourceClassName("org.h2.jdbcx.JdbcDataSource");
+        config.setConnectionTestQuery("VALUES 1");
+        config.addDataSourceProperty("URL", "jdbc:h2:mem:test");
+        config.addDataSourceProperty("user", "sa");
+        config.addDataSourceProperty("password", "sa");
+        HikariDataSource ds = new HikariDataSource(config);
+        connection = ds.getConnection();
 
         InputStream is = getClass().getClassLoader().getResourceAsStream("sample-database.sql");
         // We can only run one statement per Statement.execute() so we split
         // the string by ";\n" as to get the individual statements
         String[] sqlInitialize = TestUtils.readToString(is).split(";(\\r?)\\n");
 
-        connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         try (Statement st = connection.createStatement()) {
             st.execute("DROP TABLE IF EXISTS " + TABLE_NAME);
             for (String statement : sqlInitialize) {
@@ -198,7 +208,23 @@ public class SqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldHandleSingleValueUpdateWithEmptyColun() throws SQLException {
+    public void shouldPerformUpdateWithDefaultForNullValue() throws SQLException {
+        // given
+        context.setUseDefaults(true, true);
+
+        // when
+        boolean result1 = handler.update(8, SampleColumns.LAST_LOGIN, (Long) null);
+        boolean result2 = handler.update(8, SampleColumns.IS_ACTIVE, (Integer) null);
+
+        // then
+        assertThat(result1, equalTo(true));
+        assertThat(handler.retrieve(8, SampleColumns.LAST_LOGIN).getValue(), equalTo(LAST_LOGIN_DEFAULT));
+        assertThat(result2, equalTo(true));
+        assertThat(handler.retrieve(8, SampleColumns.IS_ACTIVE).getValue(), equalTo(IS_ACTIVE_DEFAULT));
+    }
+
+    @Test
+    public void shouldHandleSingleValueUpdateWithEmptyColumn() throws SQLException {
         // given
         context.setEmptyOptions(true, false, false);
 
@@ -297,6 +323,26 @@ public class SqlColumnsHandlerTest {
     }
 
     @Test
+    public void shouldPerformMultiUpdateWithDefaultValueForNull() throws SQLException {
+        // given
+        context.setUseDefaults(true, true);
+
+        // when
+        boolean result = handler.update(6,
+            with(SampleColumns.IS_LOCKED, 1)
+            .and(SampleColumns.LAST_LOGIN, null)
+            .and(SampleColumns.IS_ACTIVE, null)
+            .and(SampleColumns.EMAIL, "snow@example.com").build());
+
+        // then
+        assertThat(result, equalTo(true));
+        assertThat(handler.retrieve(6, SampleColumns.IS_LOCKED).getValue(), equalTo(1));
+        assertThat(handler.retrieve(6, SampleColumns.LAST_LOGIN).getValue(), equalTo(LAST_LOGIN_DEFAULT));
+        assertThat(handler.retrieve(6, SampleColumns.IS_ACTIVE).getValue(), equalTo(IS_ACTIVE_DEFAULT));
+        assertThat(handler.retrieve(6, SampleColumns.EMAIL).getValue(), equalTo("snow@example.com"));
+    }
+
+    @Test
     public void shouldUpdateWithDependentObject() throws SQLException {
         // given
         context.setEmptyOptions(true, false, false);
@@ -365,6 +411,33 @@ public class SqlColumnsHandlerTest {
         assertThat(retrievedValues.get(SampleColumns.IS_LOCKED), equalTo(1));
         assertThat(retrievedValues.get(SampleColumns.IS_ACTIVE), equalTo(1));
         assertThat(retrievedValues.get(COL_EMAIL), nullValue());
+        assertThat(retrievedValues.get(COL_LAST_LOGIN), equalTo(LAST_LOGIN_DEFAULT));
+    }
+
+    @Test
+    public void shouldInsertUsingDefaultKeywordForNullValues() throws SQLException {
+        // given
+        context.setUseDefaults(true, false);
+        UpdateValues<SampleContext> values =
+            with(SampleColumns.ID, 414)
+            .and(SampleColumns.NAME, "Oscar")
+            .and(SampleColumns.IS_LOCKED, 1)
+            .and(SampleColumns.IS_ACTIVE, null)
+            .and(SampleColumns.EMAIL, "value@example.org")
+            .and(SampleColumns.LAST_LOGIN, null)
+            .build();
+
+        // when
+        boolean result = handler.insert(values);
+
+        // then
+        assertThat(result, equalTo(true));
+        DataSourceValues retrievedValues = handler.retrieve(414,
+            SampleColumns.NAME, SampleColumns.IS_LOCKED, SampleColumns.IS_ACTIVE, COL_EMAIL, COL_LAST_LOGIN);
+        assertThat(retrievedValues.get(SampleColumns.NAME), equalTo("Oscar"));
+        assertThat(retrievedValues.get(SampleColumns.IS_LOCKED), equalTo(1));
+        assertThat(retrievedValues.get(SampleColumns.IS_ACTIVE), equalTo(IS_ACTIVE_DEFAULT));
+        assertThat(retrievedValues.get(COL_EMAIL), equalTo("value@example.org"));
         assertThat(retrievedValues.get(COL_LAST_LOGIN), nullValue());
     }
 
@@ -465,6 +538,11 @@ public class SqlColumnsHandlerTest {
         @Override
         public boolean isColumnUsed(SampleContext context) {
             return true;
+        }
+
+        @Override
+        public boolean useDefaultForNullValue(SampleContext context) {
+            return false;
         }
     }
 }

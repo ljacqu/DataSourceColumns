@@ -20,11 +20,11 @@ public class PredicateSqlGenerator<C> {
         this.context = context;
     }
 
-    public WhereClauseResult generateWhereClause(Predicate<C> predicate) {
+    public GeneratedSqlWithBindings generateWhereClause(Predicate<C> predicate) {
         StringBuilder sqlResult = new StringBuilder();
         List<Object> bindings = new LinkedList<>();
         generateWhereClause(predicate, sqlResult, bindings);
-        return new WhereClauseResult(sqlResult.toString(), bindings);
+        return new GeneratedSqlWithBindings(sqlResult.toString(), bindings);
     }
 
     private void generateWhereClause(Predicate<C> predicate, StringBuilder sqlResult, List<Object> objects) {
@@ -96,23 +96,5 @@ public class PredicateSqlGenerator<C> {
         sqlResult.append(") ").append(operator).append(" (");
         generateWhereClause(right, sqlResult, objects);
         sqlResult.append(")");
-    }
-
-    public static class WhereClauseResult {
-        private final String generatedSql;
-        private final List<Object> bindings;
-
-        public WhereClauseResult(String generatedSql, List<Object> bindings) {
-            this.generatedSql = generatedSql;
-            this.bindings = bindings;
-        }
-
-        public String getGeneratedSql() {
-            return generatedSql;
-        }
-
-        public List<Object> getBindings() {
-            return bindings;
-        }
     }
 }

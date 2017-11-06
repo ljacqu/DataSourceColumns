@@ -30,4 +30,15 @@ public interface Column<T, C> {
      */
     boolean isColumnUsed(C context);
 
+    /**
+     * Returns whether the SQL keyword {@code DEFAULT} should be used in
+     * INSERT and UPDATE operations if the value associated with the column
+     * is resolved to {@code null}.
+     *
+     * @param context the context to resolve the value with
+     * @return true if DEFAULT should be used instead of null,
+     *         false if null values should be used
+     */
+    boolean useDefaultForNullValue(C context);
+
 }
