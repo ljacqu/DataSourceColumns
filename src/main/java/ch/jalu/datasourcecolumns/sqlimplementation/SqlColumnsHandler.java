@@ -33,7 +33,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
     private final Connection connection;
     private final String tableName;
     private final String idColumn;
-    private final TypeAdapter<C> typeAdapter;
+    private final ResultSetValueRetriever<C> resultSetValueRetriever;
     private final PredicateSqlGenerator<C> predicateSqlGenerator;
     private final C context;
 
@@ -45,10 +45,27 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
      * @param tableName name of the SQL table
      * @param idColumn the name of the identifier column
      */
-    public SqlColumnsHandler(Connection connection, C context, String tableName, String idColumn)  {
+    public SqlColumnsHandler(Connection connection, C context, String tableName, String idColumn) {
+        this(connection, context, tableName, idColumn,
+            new ResultSetValueRetriever<>(context), new PredicateSqlGenerator<>(context));
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param connection connection to the database
+     * @param context the context object (for name resolution)
+     * @param tableName name of the SQL table
+     * @param idColumn the name of the identifier column
+     * @param resultSetValueRetriever instance to use to retrieve values from a result set
+     * @param predicateSqlGenerator SQL generator for predicates
+     */
+    public SqlColumnsHandler(Connection connection, C context, String tableName, String idColumn,
+                             ResultSetValueRetriever<C> resultSetValueRetriever,
+                             PredicateSqlGenerator<C> predicateSqlGenerator) {
         this.context = context;
-        this.typeAdapter = new TypeAdapter<>(context);
-        this.predicateSqlGenerator = new PredicateSqlGenerator<>(context);
+        this.resultSetValueRetriever = resultSetValueRetriever;
+        this.predicateSqlGenerator = predicateSqlGenerator;
         this.tableName = tableName;
         this.connection = connection;
         this.idColumn = idColumn;
@@ -64,7 +81,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
             pst.setObject(1, identifier);
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
-                    return isColumnUsed ? DataSourceValueImpl.of(typeAdapter.get(rs, column))
+                    return isColumnUsed ? DataSourceValueImpl.of(resultSetValueRetriever.get(rs, column))
                         : DataSourceValueImpl.of(null);
                 }
                 return DataSourceValueImpl.unknownRow();
@@ -86,7 +103,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
                     DataSourceValuesImpl values = new DataSourceValuesImpl();
                     for (Column<?, C> column : columns) {
                         if (nonEmptyColumns.contains(column)) {
-                            values.put(column, typeAdapter.get(rs, column));
+                            values.put(column, resultSetValueRetriever.get(rs, column));
                         } else {
                             values.put(column, null);
                         }

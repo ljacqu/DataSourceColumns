@@ -9,15 +9,33 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-class TypeAdapter<C> {
+/**
+ * Retrieves values from a SQL {@link ResultSet}.
+ *
+ * @param <C> the context type
+ */
+public class ResultSetValueRetriever<C> {
 
     private final C context;
     private final Map<ColumnType, ResultSetGetter> resultSetGetters = new HashMap<>();
 
-    TypeAdapter(C context) {
+    /**
+     * Constructor.
+     *
+     * @param context the context
+     */
+    public ResultSetValueRetriever(C context) {
         this.context = context;
     }
 
+    /**
+     * Gets the value for the column from the given result set.
+     *
+     * @param rs the result set to fetch from
+     * @param column the column to fetch the value for
+     * @param <T> the value type
+     * @return the fetched value
+     */
     public <T> T get(ResultSet rs, Column<T, C> column) throws SQLException {
         return ((ResultSetGetter<T>) resultSetGetters.computeIfAbsent(column.getType(), this::createResultSetGetter))
             .getValue(rs, column.resolveName(context));
@@ -42,7 +60,7 @@ class TypeAdapter<C> {
         } else if (type == StandardTypes.BOOLEAN) {
             resultSetGetter = getTypeNullable(ResultSet::getBoolean, false);
         } else {
-            throw new IllegalStateException("Unhandled type '" + type + "'");
+            throw new IllegalArgumentException("Unhandled type '" + type + "'");
         }
         return resultSetGetter;
     }
@@ -55,7 +73,7 @@ class TypeAdapter<C> {
     }
 
     @FunctionalInterface
-    protected interface ResultSetGetter<T> {
+    public interface ResultSetGetter<T> {
 
         T getValue(ResultSet rs, String column) throws SQLException;
 

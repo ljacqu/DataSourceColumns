@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import static ch.jalu.datasourcecolumns.TestUtils.expectException;
 import static ch.jalu.datasourcecolumns.data.UpdateValues.with;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.greaterThan;
@@ -31,7 +32,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 /**
  * Integration test for {@link SqlColumnsHandler}.
@@ -381,14 +381,11 @@ public abstract class AbstractSqlColumnsHandlerTest {
             .build();
 
         // when
-        try {
-            handler.insert(values);
+        IllegalStateException ex = expectException(IllegalStateException.class,
+            () -> handler.insert(values));
 
-            // then
-            fail("Expected exception to be thrown");
-        } catch (IllegalStateException e) {
-            assertThat(e.getMessage(), startsWith("Cannot perform insert when all columns are empty"));
-        }
+        // then
+        assertThat(ex.getMessage(), startsWith("Cannot perform insert when all columns are empty"));
     }
 
     @Test
@@ -438,12 +435,8 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     private static void verifyThrowsException(Runnable runnable) {
-        try {
-            runnable.run();
-            fail("Expected exception to be thrown");
-        } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage(), containsString("No value available for column"));
-        }
+        IllegalArgumentException ex = expectException(IllegalArgumentException.class, runnable::run);
+        assertThat(ex.getMessage(), containsString("No value available for column"));
     }
 
     private static final class ColumnImpl<T> implements Column<T, SampleContext> {

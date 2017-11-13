@@ -12,14 +12,30 @@ import ch.jalu.datasourcecolumns.predicate.Predicate;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Converts {@link Predicate} instances to SQL.
+ *
+ * @param <C> the context type
+ */
 public class PredicateSqlGenerator<C> {
 
     private final C context;
 
+    /**
+     * Constructor.
+     *
+     * @param context the context
+     */
     public PredicateSqlGenerator(C context) {
         this.context = context;
     }
 
+    /**
+     * Generates SQL to use as {@code WHERE} clause in a query.
+     *
+     * @param predicate the predicate to convert to SQL
+     * @return the generated SQL code
+     */
     public GeneratedSqlWithBindings generateWhereClause(Predicate<C> predicate) {
         StringBuilder sqlResult = new StringBuilder();
         List<Object> bindings = new LinkedList<>();
@@ -27,7 +43,7 @@ public class PredicateSqlGenerator<C> {
         return new GeneratedSqlWithBindings(sqlResult.toString(), bindings);
     }
 
-    private void generateWhereClause(Predicate<C> predicate, StringBuilder sqlResult, List<Object> objects) {
+    protected void generateWhereClause(Predicate<C> predicate, StringBuilder sqlResult, List<Object> objects) {
         final Class<?> clazz = predicate.getClass();
         if (clazz == ComparingPredicate.class) {
             ComparingPredicate<?, C> eq = (ComparingPredicate<?, C>) predicate;
@@ -38,7 +54,7 @@ public class PredicateSqlGenerator<C> {
         } else if (clazz == AndPredicate.class) {
             AndPredicate<C> and = (AndPredicate<C>) predicate;
             processCombiningClause(and.getLeft(), and.getRight(), "AND", sqlResult, objects);
-        }  else if (clazz == IsNullPredicate.class) {
+        } else if (clazz == IsNullPredicate.class) {
             IsNullPredicate<C> isNull = (IsNullPredicate<C>) predicate;
             processIsNullAndNotNullPredicate(false, isNull.getColumn(), sqlResult);
         } else if (clazz == IsNotNullPredicate.class) {
@@ -51,12 +67,12 @@ public class PredicateSqlGenerator<C> {
         }
     }
 
-    private void addAlwaysTruePredicate(StringBuilder sqlResult) {
+    protected void addAlwaysTruePredicate(StringBuilder sqlResult) {
         sqlResult.append("1 = 1");
     }
 
-    private void processComparingClause(ComparingPredicate<?, C> predicate, StringBuilder sqlResult,
-                                        List<Object> objects) {
+    protected void processComparingClause(ComparingPredicate<?, C> predicate, StringBuilder sqlResult,
+                                          List<Object> objects) {
         if (predicate.getColumn().isColumnUsed(context)) {
             sqlResult.append(predicate.getColumn().resolveName(context))
                 .append(convertComparingTypeToSqlOperator(predicate.getType()))
@@ -67,7 +83,7 @@ public class PredicateSqlGenerator<C> {
         }
     }
 
-    private String convertComparingTypeToSqlOperator(ComparingPredicate.Type type) {
+    protected String convertComparingTypeToSqlOperator(ComparingPredicate.Type type) {
         switch (type) {
             case LESS:           return " < ";
             case LESS_EQUALS:    return " <= ";
@@ -80,7 +96,7 @@ public class PredicateSqlGenerator<C> {
         }
     }
 
-    private void processIsNullAndNotNullPredicate(boolean isNegated, Column<?, C> column, StringBuilder sqlResult) {
+    protected void processIsNullAndNotNullPredicate(boolean isNegated, Column<?, C> column, StringBuilder sqlResult) {
         if (column.isColumnUsed(context)) {
             final String condition = isNegated ? " IS NOT NULL" : " IS NULL";
             sqlResult.append(column.resolveName(context)).append(condition);
@@ -89,8 +105,8 @@ public class PredicateSqlGenerator<C> {
         }
     }
 
-    private void processCombiningClause(Predicate<C> left, Predicate<C> right, String operator,
-                                        StringBuilder sqlResult, List<Object> objects) {
+    protected void processCombiningClause(Predicate<C> left, Predicate<C> right, String operator,
+                                          StringBuilder sqlResult, List<Object> objects) {
         sqlResult.append("(");
         generateWhereClause(left, sqlResult, objects);
         sqlResult.append(") ").append(operator).append(" (");
