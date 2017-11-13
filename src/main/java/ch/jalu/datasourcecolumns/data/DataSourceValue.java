@@ -1,18 +1,18 @@
 package ch.jalu.datasourcecolumns.data;
 
 /**
- * Wraps a value and allows to specify whether a value is missing or the player is not registered.
+ * Wraps a value and allows to specify whether a row was found.
  */
 public interface DataSourceValue<T> {
 
     /**
-     * @return whether the player of the associated value exists
+     * @return true if the row exists, false otherwise
      */
-    boolean playerExists(); // TODO: rename
+    boolean rowExists();
 
     /**
-     * Returns the value. It is {@code null} if the player is unknown. It is also {@code null}
-     * if the player exists but does not have the value defined.
+     * Returns the value. It is {@code null} if the value is null
+     * or the row does not exist.
      *
      * @return the value, or null
      */

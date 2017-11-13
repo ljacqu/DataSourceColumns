@@ -6,17 +6,21 @@ import ch.jalu.datasourcecolumns.StandardTypes;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 class TypeAdapter<C> {
 
     private final C context;
+    private final Map<ColumnType, ResultSetGetter> resultSetGetters = new HashMap<>();
 
     TypeAdapter(C context) {
         this.context = context;
     }
 
     public <T> T get(ResultSet rs, Column<T, C> column) throws SQLException {
-        return createResultSetGetter(column.getType()).getValue(rs, column.resolveName(context));
+        return ((ResultSetGetter<T>) resultSetGetters.computeIfAbsent(column.getType(), this::createResultSetGetter))
+            .getValue(rs, column.resolveName(context));
     }
 
     /**
@@ -28,31 +32,30 @@ class TypeAdapter<C> {
      * @return the getter to use
      */
     protected <T> ResultSetGetter<T> createResultSetGetter(ColumnType<T> type) {
-        // TODO: cache items?
         final ResultSetGetter resultSetGetter;
         if (type == StandardTypes.STRING) {
             resultSetGetter = ResultSet::getString;
         } else if (type == StandardTypes.LONG) {
-            resultSetGetter = getTypeNullable(ResultSet::getLong);
+            resultSetGetter = getTypeNullable(ResultSet::getLong, 0L);
         } else if (type == StandardTypes.INTEGER) {
-            resultSetGetter = getTypeNullable(ResultSet::getInt);
+            resultSetGetter = getTypeNullable(ResultSet::getInt, 0);
         } else if (type == StandardTypes.BOOLEAN) {
-            resultSetGetter = getTypeNullable(ResultSet::getBoolean);
+            resultSetGetter = getTypeNullable(ResultSet::getBoolean, false);
         } else {
             throw new IllegalStateException("Unhandled type '" + type + "'");
         }
         return resultSetGetter;
     }
 
-    private static <T> ResultSetGetter<T> getTypeNullable(ResultSetGetter<T> getter) {
+    private static <T> ResultSetGetter<T> getTypeNullable(ResultSetGetter<T> getter, T standInValue) {
         return (rs, column) -> {
-            T value = getter.getValue(rs, column);
-            return rs.wasNull() ? null : value;
+            final T value = getter.getValue(rs, column);
+            return standInValue.equals(value) && rs.wasNull() ? null : value;
         };
     }
 
     @FunctionalInterface
-    private interface ResultSetGetter<T> {
+    protected interface ResultSetGetter<T> {
 
         T getValue(ResultSet rs, String column) throws SQLException;
 

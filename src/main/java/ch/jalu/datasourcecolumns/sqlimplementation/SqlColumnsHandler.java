@@ -67,7 +67,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
                     return isColumnUsed ? DataSourceValueImpl.of(typeAdapter.get(rs, column))
                         : DataSourceValueImpl.of(null);
                 }
-                return DataSourceValueImpl.unknownPlayer();
+                return DataSourceValueImpl.unknownRow();
             }
         }
     }
@@ -93,7 +93,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
                     }
                     return values;
                 } else {
-                    return DataSourceValuesImpl.unknownPlayer();
+                    return DataSourceValuesImpl.unknownRow();
                 }
             }
         }

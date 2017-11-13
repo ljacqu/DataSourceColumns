@@ -5,16 +5,29 @@ import ch.jalu.datasourcecolumns.Column;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Implementation of {@link DataSourceValues}.
+ */
 public class DataSourceValuesImpl implements DataSourceValues {
 
-    private static final DataSourceValuesImpl UNKNOWN_PLAYER = new DataSourceValuesImpl();
+    private static final DataSourceValuesImpl UNKNOWN_ROW = new DataSourceValuesImpl();
 
     private final Map<Column, Object> values = new HashMap<>();
 
-    public static DataSourceValuesImpl unknownPlayer() {
-        return UNKNOWN_PLAYER;
+    /**
+     * @return {@link DataSourceValues} instance to represent a non-existent row
+     */
+    public static DataSourceValuesImpl unknownRow() {
+        return UNKNOWN_ROW;
     }
 
+    /**
+     * Adds the provided value for the given column.
+     *
+     * @param column the column to save the value for
+     * @param value the value to save
+     * @param <T> the value type
+     */
     public <T> void put(Column<T, ?> column, Object value) {
         final Class<T> typeClass = column.getType().getClazz();
         if (value == null || typeClass.isInstance(value)) {
@@ -36,7 +49,7 @@ public class DataSourceValuesImpl implements DataSourceValues {
     }
 
     @Override
-    public boolean playerExists() {
-        return this != UNKNOWN_PLAYER;
+    public boolean rowExists() {
+        return this != UNKNOWN_ROW;
     }
 }

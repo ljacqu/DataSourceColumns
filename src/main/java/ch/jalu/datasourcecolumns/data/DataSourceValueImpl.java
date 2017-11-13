@@ -5,8 +5,8 @@ package ch.jalu.datasourcecolumns.data;
  */
 public final class DataSourceValueImpl<T> implements DataSourceValue<T> {
 
-    /** Instance used when a player does not exist. */
-    private static final DataSourceValueImpl UNKNOWN_PLAYER = new DataSourceValueImpl<>(null);
+    /** Instance used when a row does not exist. */
+    private static final DataSourceValueImpl UNKNOWN_ROW = new DataSourceValueImpl<>(null);
     private final T value;
 
     private DataSourceValueImpl(T value) {
@@ -25,18 +25,18 @@ public final class DataSourceValueImpl<T> implements DataSourceValue<T> {
     }
 
     /**
-     * Returns a {@link DataSourceValueImpl} specifying that the player does not exist.
+     * Returns a {@link DataSourceValueImpl} specifying that the row does not exist.
      *
      * @param <T> the value type
-     * @return data source result for unknown player
+     * @return data source result for non-existent row
      */
-    public static <T> DataSourceValueImpl<T> unknownPlayer() {
-        return UNKNOWN_PLAYER;
+    public static <T> DataSourceValueImpl<T> unknownRow() {
+        return UNKNOWN_ROW;
     }
 
     @Override
-    public boolean playerExists() {
-        return this != UNKNOWN_PLAYER;
+    public boolean rowExists() {
+        return this != UNKNOWN_ROW;
     }
 
     @Override

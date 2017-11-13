@@ -90,11 +90,11 @@ public abstract class AbstractSqlColumnsHandlerTest {
         DataSourceValue<String> nonExistentIp = handler.retrieve(222, SampleColumns.IP);
 
         // then
-        assertThat(alexIp.playerExists(), equalTo(true));
+        assertThat(alexIp.rowExists(), equalTo(true));
         assertThat(alexIp.getValue(), equalTo("111.111.111.111"));
-        assertThat(emilyIp.playerExists(), equalTo(true));
+        assertThat(emilyIp.rowExists(), equalTo(true));
         assertThat(emilyIp.getValue(), nullValue());
-        assertThat(nonExistentIp.playerExists(), equalTo(false));
+        assertThat(nonExistentIp.rowExists(), equalTo(false));
         assertThat(nonExistentIp.getValue(), nullValue());
     }
 
@@ -108,9 +108,9 @@ public abstract class AbstractSqlColumnsHandlerTest {
         DataSourceValue<String> result2 = handler.retrieve(777, SampleColumns.EMAIL);
 
         // then
-        assertThat(result1.playerExists(), equalTo(true));
+        assertThat(result1.rowExists(), equalTo(true));
         assertThat(result1.getValue(), nullValue());
-        assertThat(result2.playerExists(), equalTo(false));
+        assertThat(result2.rowExists(), equalTo(false));
         assertThat(result2.getValue(), nullValue());
     }
 
@@ -135,7 +135,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
         assertThat(finnValues.get(SampleColumns.LAST_LOGIN), nullValue());
         verifyThrowsException(() -> finnValues.get(SampleColumns.IS_ACTIVE));
 
-        assertThat(nonExistent.playerExists(), equalTo(false));
+        assertThat(nonExistent.rowExists(), equalTo(false));
         verifyThrowsException(() -> nonExistent.get(SampleColumns.NAME));
     }
 
@@ -161,7 +161,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
         assertThat(finnValues.get(SampleColumns.LAST_LOGIN), nullValue());
         verifyThrowsException(() -> finnValues.get(SampleColumns.IS_ACTIVE));
 
-        assertThat(nonExistent.playerExists(), equalTo(false));
+        assertThat(nonExistent.rowExists(), equalTo(false));
         verifyThrowsException(() -> nonExistent.get(SampleColumns.LAST_LOGIN));
     }
 
@@ -176,12 +176,12 @@ public abstract class AbstractSqlColumnsHandlerTest {
         DataSourceValues nonExistent = handler.retrieve(-5, columns);
 
         // then
-        assertThat(hansValues.playerExists(), equalTo(true));
+        assertThat(hansValues.rowExists(), equalTo(true));
         assertThat(hansValues.get(SampleColumns.EMAIL), nullValue());
         assertThat(hansValues.get(SampleColumns.LAST_LOGIN), nullValue());
         verifyThrowsException(() -> hansValues.get(SampleColumns.ID));
 
-        assertThat(nonExistent.playerExists(), equalTo(false));
+        assertThat(nonExistent.rowExists(), equalTo(false));
         verifyThrowsException(() -> nonExistent.get(SampleColumns.LAST_LOGIN));
     }
 

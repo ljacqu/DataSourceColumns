@@ -8,6 +8,7 @@ import java.util.Set;
 
 /**
  * Holder class for values associated with a column.
+ * Used for insert and update statements with multiple values.
  *
  * @param <C> the context type
  */
@@ -19,10 +20,20 @@ public final class UpdateValues<C> {
         this.values = map;
     }
 
+    /**
+     * @return the columns for which this instance has values
+     */
     public Set<Column<?, C>> getColumns() {
         return values.keySet();
     }
 
+    /**
+     * Gets the value associated with the column. Throws an exception if not present.
+     *
+     * @param column the column to retrieve
+     * @param <T> the value type
+     * @return the value for the column
+     */
     @SuppressWarnings("unchecked")
     public <T> T get(Column<T, C> column) {
         final T value = (T) values.get(column);
