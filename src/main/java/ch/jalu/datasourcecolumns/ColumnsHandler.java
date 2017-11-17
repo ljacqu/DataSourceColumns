@@ -96,6 +96,12 @@ public interface ColumnsHandler<C, I> {
      */
     <D> boolean insert(D dependent, DependentColumn<?, C, D>... columns) throws Exception;
 
+    /**
+     * Returns the number of rows that match the provided predicate.
+     *
+     * @param predicate the predicate to test the rows for
+     * @return number of rows fulfilling the predicate
+     */
     int count(Predicate<C> predicate) throws Exception;
 
 }

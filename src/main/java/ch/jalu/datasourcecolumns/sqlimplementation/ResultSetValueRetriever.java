@@ -36,6 +36,7 @@ public class ResultSetValueRetriever<C> {
      * @param <T> the value type
      * @return the fetched value
      */
+    @SuppressWarnings("unchecked")
     public <T> T get(ResultSet rs, Column<T, C> column) throws SQLException {
         return ((ResultSetGetter<T>) resultSetGetters.computeIfAbsent(column.getType(), this::createResultSetGetter))
             .getValue(rs, column.resolveName(context));
@@ -49,6 +50,7 @@ public class ResultSetValueRetriever<C> {
      * @param <T> the type
      * @return the getter to use
      */
+    @SuppressWarnings("unchecked")
     protected <T> ResultSetGetter<T> createResultSetGetter(ColumnType<T> type) {
         final ResultSetGetter resultSetGetter;
         if (type == StandardTypes.STRING) {
@@ -75,6 +77,13 @@ public class ResultSetValueRetriever<C> {
     @FunctionalInterface
     public interface ResultSetGetter<T> {
 
+        /**
+         * Retrieves the value from the provided ResultSet for the given column name.
+         *
+         * @param rs the result set to fetch a value from
+         * @param column name of the column to fetch the value for
+         * @return the retrieved value, may be null
+         */
         T getValue(ResultSet rs, String column) throws SQLException;
 
     }
