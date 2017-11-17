@@ -32,6 +32,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Integration test for {@link SqlColumnsHandler}.
@@ -81,6 +82,10 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     protected abstract Connection createConnection() throws Exception;
+
+    protected boolean hasSupportForDefaultKeyword() {
+        return true;
+    }
 
     @Test
     public void shouldRetrieveSingleValue() throws SQLException {
@@ -322,6 +327,46 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
+    public void shouldPerformUpdateWithDefaultForNullValue() throws SQLException {
+        assumeTrue(hasSupportForDefaultKeyword());
+
+        // given
+        context.setUseDefaults(true, true);
+
+        // when
+        boolean result1 = handler.update(8, SampleColumns.LAST_LOGIN, (Long) null);
+        boolean result2 = handler.update(8, SampleColumns.IS_ACTIVE, (Integer) null);
+
+        // then
+        assertThat(result1, equalTo(true));
+        assertThat(handler.retrieve(8, SampleColumns.LAST_LOGIN).getValue(), equalTo(LAST_LOGIN_DEFAULT));
+        assertThat(result2, equalTo(true));
+        assertThat(handler.retrieve(8, SampleColumns.IS_ACTIVE).getValue(), equalTo(IS_ACTIVE_DEFAULT));
+    }
+
+    @Test
+    public void shouldPerformMultiUpdateWithDefaultValueForNull() throws SQLException {
+        assumeTrue(hasSupportForDefaultKeyword());
+
+        // given
+        context.setUseDefaults(true, true);
+
+        // when
+        boolean result = handler.update(6,
+            with(SampleColumns.IS_LOCKED, 1)
+            .and(SampleColumns.LAST_LOGIN, null)
+            .and(SampleColumns.IS_ACTIVE, null)
+            .and(SampleColumns.EMAIL, "snow@example.com").build());
+
+        // then
+        assertThat(result, equalTo(true));
+        assertThat(handler.retrieve(6, SampleColumns.IS_LOCKED).getValue(), equalTo(1));
+        assertThat(handler.retrieve(6, SampleColumns.LAST_LOGIN).getValue(), equalTo(LAST_LOGIN_DEFAULT));
+        assertThat(handler.retrieve(6, SampleColumns.IS_ACTIVE).getValue(), equalTo(IS_ACTIVE_DEFAULT));
+        assertThat(handler.retrieve(6, SampleColumns.EMAIL).getValue(), equalTo("snow@example.com"));
+    }
+
+    @Test
     public void shouldInsertValues() throws SQLException {
         // given
         UpdateValues<SampleContext> values =
@@ -413,6 +458,35 @@ public abstract class AbstractSqlColumnsHandlerTest {
         assertThat(handler.retrieve(155, SampleColumns.IS_LOCKED).getValue(), equalTo(1));
         assertThat(handler.retrieve(155, SampleColumns.IS_ACTIVE).getValue(), equalTo(1));
         assertThat(handler.retrieve(155, SampleColumns.LAST_LOGIN).getValue(), equalTo(1354091L));
+    }
+
+    @Test
+    public void shouldInsertUsingDefaultKeywordForNullValues() throws SQLException {
+        assumeTrue(hasSupportForDefaultKeyword());
+
+        // given
+        context.setUseDefaults(true, false);
+        UpdateValues<SampleContext> values =
+            with(SampleColumns.ID, 414)
+            .and(SampleColumns.NAME, "Oscar")
+            .and(SampleColumns.IS_LOCKED, 1)
+            .and(SampleColumns.IS_ACTIVE, null)
+            .and(SampleColumns.EMAIL, "value@example.org")
+            .and(SampleColumns.LAST_LOGIN, null)
+            .build();
+
+        // when
+        boolean result = handler.insert(values);
+
+        // then
+        assertThat(result, equalTo(true));
+        DataSourceValues retrievedValues = handler.retrieve(414,
+            SampleColumns.NAME, SampleColumns.IS_LOCKED, SampleColumns.IS_ACTIVE, COL_EMAIL, COL_LAST_LOGIN);
+        assertThat(retrievedValues.get(SampleColumns.NAME), equalTo("Oscar"));
+        assertThat(retrievedValues.get(SampleColumns.IS_LOCKED), equalTo(1));
+        assertThat(retrievedValues.get(SampleColumns.IS_ACTIVE), equalTo(IS_ACTIVE_DEFAULT));
+        assertThat(retrievedValues.get(COL_EMAIL), equalTo("value@example.org"));
+        assertThat(retrievedValues.get(COL_LAST_LOGIN), nullValue());
     }
 
     @Test

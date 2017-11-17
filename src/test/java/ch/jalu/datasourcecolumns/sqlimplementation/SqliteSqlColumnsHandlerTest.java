@@ -13,4 +13,10 @@ public class SqliteSqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
         Class.forName("org.sqlite.JDBC");
         return DriverManager.getConnection("jdbc:sqlite::memory:");
     }
+
+    @Override
+    protected boolean hasSupportForDefaultKeyword() {
+        // SQLite does not support the DEFAULT keyword
+        return false;
+    }
 }
