@@ -30,7 +30,8 @@ public final class SampleColumns<T> implements DependentColumn<T, SampleContext,
 
     // -----------------------------------
     static {
-        initNameFields(); // crazy or genius?
+        // Sets the #name field on all instances for better toString() in case of debugging or errors
+        initNameFields();
     }
 
     private final ColumnType<T> type;
