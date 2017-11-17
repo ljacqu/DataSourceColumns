@@ -3,6 +3,8 @@ package ch.jalu.datasourcecolumns.demo;
 import ch.jalu.datasourcecolumns.ColumnsHandler;
 import ch.jalu.datasourcecolumns.data.DataSourceValues;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
+import ch.jalu.datasourcecolumns.sqlimplementation.PredicateSqlGenerator;
+import ch.jalu.datasourcecolumns.sqlimplementation.ResultSetValueRetriever;
 import ch.jalu.datasourcecolumns.sqlimplementation.SqlColumnsHandler;
 
 import java.sql.Connection;
@@ -35,7 +37,8 @@ public class DemoRunner {
         // Create columns handler
         String idName = PersonColumns.NAME.resolveName(configuration);
         ColumnsHandler<Configuration, String> columnsHandler =
-            new SqlColumnsHandler<>(connection, configuration, "tbl", idName);
+            new SqlColumnsHandler<>(new LoggingStatementGenerator(connection), configuration, "tbl", idName,
+                new ResultSetValueRetriever<>(configuration), new PredicateSqlGenerator<>(configuration));
 
         // Run demo!
         System.out.println();

@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static ch.jalu.datasourcecolumns.sqlimplementation.PreparedStatementGenerator.fromConnection;
+
 /**
  * Implementation of {@link ColumnsHandler} for a SQL data source.
  *
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
  */
 public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
 
-    private final Connection connection;
+    private final PreparedStatementGenerator preparedStatementGenerator;
     private final String tableName;
     private final String idColumn;
     private final ResultSetValueRetriever<C> resultSetValueRetriever;
@@ -46,28 +48,28 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
      * @param idColumn the name of the identifier column
      */
     public SqlColumnsHandler(Connection connection, C context, String tableName, String idColumn) {
-        this(connection, context, tableName, idColumn,
+        this(fromConnection(connection), context, tableName, idColumn,
             new ResultSetValueRetriever<>(context), new PredicateSqlGenerator<>(context));
     }
 
     /**
      * Constructor.
      *
-     * @param connection connection to the database
+     * @param preparedStatementGenerator function returning a PreparedStatement for provided SQL code
      * @param context the context object (for name resolution)
      * @param tableName name of the SQL table
      * @param idColumn the name of the identifier column
      * @param resultSetValueRetriever instance to use to retrieve values from a result set
      * @param predicateSqlGenerator SQL generator for predicates
      */
-    public SqlColumnsHandler(Connection connection, C context, String tableName, String idColumn,
-                             ResultSetValueRetriever<C> resultSetValueRetriever,
+    public SqlColumnsHandler(PreparedStatementGenerator preparedStatementGenerator, C context, String tableName,
+                             String idColumn, ResultSetValueRetriever<C> resultSetValueRetriever,
                              PredicateSqlGenerator<C> predicateSqlGenerator) {
         this.context = context;
         this.resultSetValueRetriever = resultSetValueRetriever;
         this.predicateSqlGenerator = predicateSqlGenerator;
         this.tableName = tableName;
-        this.connection = connection;
+        this.preparedStatementGenerator = preparedStatementGenerator;
         this.idColumn = idColumn;
     }
 
@@ -77,7 +79,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final String columnName = isColumnUsed ? column.resolveName(context) : "1";
         final String sql = "SELECT " + columnName + " FROM " + tableName + " WHERE " + idColumn + " = ?;";
 
-        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+        try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
             pst.setObject(1, identifier);
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
@@ -96,7 +98,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final String sql = "SELECT " + (nonEmptyColumns.isEmpty() ? "1" : commaSeparatedList(nonEmptyColumns))
             + " FROM " + tableName + " WHERE " + idColumn + " = ?;";
 
-        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+        try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
             pst.setObject(1, identifier);
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
@@ -123,14 +125,14 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         } else if (value == null && column.useDefaultForNullValue(context)) {
             String sql = "UPDATE " + tableName + " SET " + column.resolveName(context)
                 + " = DEFAULT WHERE " + idColumn + " = ?;";
-            try (PreparedStatement pst = connection.prepareStatement(sql)) {
+            try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
                 pst.setObject(1, identifier);
                 return performUpdateAction(pst);
             }
         }
         String sql = "UPDATE " + tableName + " SET " + column.resolveName(context)
             + " = ? WHERE " + idColumn + " = ?;";
-        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+        try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
             pst.setObject(1, value);
             pst.setObject(2, identifier);
             return performUpdateAction(pst);
@@ -169,7 +171,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
     public int count(Predicate<C> predicate) throws SQLException {
         GeneratedSqlWithBindings whereResult = predicateSqlGenerator.generateWhereClause(predicate);
         String sql = "SELECT COUNT(1) FROM " + tableName + " WHERE " + whereResult.getGeneratedSql();
-        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+        try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
             bindValues(pst, 1, whereResult.getBindings());
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
@@ -190,7 +192,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final GeneratedSqlWithBindings columnSetList = createColumnsListForUpdate(nonEmptyColumns, valueGetter);
         final String sql = "UPDATE " + tableName + " SET "
             + columnSetList.getGeneratedSql() + " WHERE " + idColumn + " = ?;";
-        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+        try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
             int index = bindValues(pst, 1, columnSetList.getBindings());
             pst.setObject(index, identifier);
             return performUpdateAction(pst);
@@ -225,7 +227,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final GeneratedSqlWithBindings placeholders = createValuePlaceholdersForInsert(nonEmptyColumns, valueGetter);
         final String sql = "INSERT INTO " + tableName + " (" + commaSeparatedList(nonEmptyColumns) + ") "
             + "VALUES(" + placeholders.getGeneratedSql() + ");";
-        try (PreparedStatement pst = connection.prepareStatement(sql)) {
+        try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
             bindValues(pst, 1, placeholders.getBindings());
             return performUpdateAction(pst);
         }
