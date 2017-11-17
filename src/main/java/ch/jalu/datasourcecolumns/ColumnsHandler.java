@@ -5,6 +5,8 @@ import ch.jalu.datasourcecolumns.data.DataSourceValues;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
 import ch.jalu.datasourcecolumns.predicate.Predicate;
 
+import java.util.List;
+
 /**
  * Handler which performs operations on the data source based on the given
  * columns and values.
@@ -33,6 +35,15 @@ public interface ColumnsHandler<C, I> {
      * @return map-like object with the requested values
      */
     DataSourceValues retrieve(I identifier, Column<?, C>... columns) throws Exception;
+
+    /**
+     * Retrieves the given columns' values from all rows that satisfy the given predicate.
+     *
+     * @param predicate the predicate to fulfill
+     * @param columns the columns to retrieve from the matching rows
+     * @return the values in the matching rows
+     */
+    List<DataSourceValues> retrieve(Predicate<C> predicate, Column<?, C>... columns) throws Exception;
 
     /**
      * Changes a column from a specific row to the given value.

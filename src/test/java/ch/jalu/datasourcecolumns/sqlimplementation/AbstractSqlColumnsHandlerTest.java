@@ -10,6 +10,7 @@ import ch.jalu.datasourcecolumns.TestUtils;
 import ch.jalu.datasourcecolumns.data.DataSourceValue;
 import ch.jalu.datasourcecolumns.data.DataSourceValues;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
+import ch.jalu.datasourcecolumns.predicate.Predicate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,17 +19,23 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import static ch.jalu.datasourcecolumns.TestUtils.expectException;
 import static ch.jalu.datasourcecolumns.data.UpdateValues.with;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.greaterThan;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.greaterThanEquals;
+import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNotNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.or;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
@@ -42,17 +49,17 @@ public abstract class AbstractSqlColumnsHandlerTest {
     private static final String TABLE_NAME = "testingdata";
     private static final String ID_COLUMN = "id";
 
-    protected static final long LAST_LOGIN_DEFAULT = -123L;
-    protected static final int IS_ACTIVE_DEFAULT = 3;
+    private static final long LAST_LOGIN_DEFAULT = -123L;
+    private static final int IS_ACTIVE_DEFAULT = 3;
 
-    // Columns that are not empty for testing
-    protected static final ColumnImpl<String> COL_EMAIL = new ColumnImpl<>("email", StandardTypes.STRING);
-    protected static final ColumnImpl<Long> COL_LAST_LOGIN = new ColumnImpl<>("last_login", StandardTypes.LONG);
-    protected static final ColumnImpl<Integer> COL_IS_LOCKED = new ColumnImpl<>("is_locked", StandardTypes.INTEGER);
+    // Columns that are not declared as empty for retrieval in test assertions
+    private static final ColumnImpl<String> COL_EMAIL = new ColumnImpl<>("email", StandardTypes.STRING);
+    private static final ColumnImpl<Long> COL_LAST_LOGIN = new ColumnImpl<>("last_login", StandardTypes.LONG);
+    private static final ColumnImpl<Integer> COL_IS_LOCKED = new ColumnImpl<>("is_locked", StandardTypes.INTEGER);
 
-    protected Connection connection;
-    protected SqlColumnsHandler<SampleContext, Integer> handler;
-    protected SampleContext context;
+    private Connection connection;
+    private SqlColumnsHandler<SampleContext, Integer> handler;
+    private SampleContext context;
 
     @Before
     public void setUpConnection() throws Exception {
@@ -188,6 +195,41 @@ public abstract class AbstractSqlColumnsHandlerTest {
 
         assertThat(nonExistent.rowExists(), equalTo(false));
         verifyThrowsException(() -> nonExistent.get(SampleColumns.LAST_LOGIN));
+    }
+
+    @Test
+    public void shouldRetrieveValuesOfRowsMatchingPredicate() throws SQLException {
+        // given
+        Predicate<SampleContext> predicate = or(eq(SampleColumns.IP, "22.22.22.22"), eq(SampleColumns.IP, "111.111.111.111"))
+            .and(isNotNull(SampleColumns.EMAIL));
+
+        // when
+        List<DataSourceValues> result = handler.retrieve(predicate, SampleColumns.NAME, SampleColumns.LAST_LOGIN);
+
+        // then
+        assertThat(result, hasSize(5));
+
+        List<String> names = new ArrayList<>(5);
+        List<Long> lastLogins = new ArrayList<>(5);
+        result.forEach(r -> {
+            names.add(r.get(SampleColumns.NAME));
+            lastLogins.add(r.get(SampleColumns.LAST_LOGIN));
+        });
+
+        assertThat(names, containsInAnyOrder("Brett", "Cody", "Finn", "Igor", "Keane"));
+        assertThat(lastLogins, containsInAnyOrder(123456L, 888888L, null, 725124L, 888888L));
+    }
+
+    @Test
+    public void shouldReturnEmptyListForNoRowsMatchingPredicate() throws SQLException {
+        // given
+        Predicate<SampleContext> predicate = greaterThan(SampleColumns.ID, 20);
+
+        // when
+        List<DataSourceValues> result = handler.retrieve(predicate, SampleColumns.ID, SampleColumns.EMAIL, SampleColumns.IP);
+
+        // then
+        assertThat(result, empty());
     }
 
     @Test
@@ -517,7 +559,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
         private final String name;
         private final ColumnType<T> type;
 
-        ColumnImpl(String name, ColumnType<T> type) {
+        private ColumnImpl(String name, ColumnType<T> type) {
             this.name = name;
             this.type = type;
         }

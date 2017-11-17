@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -101,21 +102,32 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
             pst.setObject(1, identifier);
             try (ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    DataSourceValuesImpl values = new DataSourceValuesImpl();
-                    for (Column<?, C> column : columns) {
-                        if (nonEmptyColumns.contains(column)) {
-                            values.put(column, resultSetValueRetriever.get(rs, column));
-                        } else {
-                            values.put(column, null);
-                        }
-                    }
-                    return values;
-                } else {
-                    return DataSourceValuesImpl.unknownRow();
+                return rs.next()
+                    ? generateDataSourceValuesObject(rs, nonEmptyColumns, columns)
+                    : DataSourceValuesImpl.unknownRow();
+            }
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<DataSourceValues> retrieve(Predicate<C> predicate, Column<?, C>... columns) throws SQLException {
+        final Set<Column<?, C>> nonEmptyColumns = removeSkippedColumns(columns);
+        final GeneratedSqlWithBindings sqlPredicate = predicateSqlGenerator.generateWhereClause(predicate);
+        final String sql = "SELECT " + (nonEmptyColumns.isEmpty() ? "1" : commaSeparatedList(nonEmptyColumns))
+            + " FROM " + tableName + " WHERE " + sqlPredicate.getGeneratedSql();
+
+        List<DataSourceValues> matchingEntries = new ArrayList<>();
+        try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
+            bindValues(pst, 1, sqlPredicate.getBindings());
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    DataSourceValues values = generateDataSourceValuesObject(rs, nonEmptyColumns, columns);
+                    matchingEntries.add(values);
                 }
             }
         }
+        return matchingEntries;
     }
 
     @Override
@@ -251,6 +263,26 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         return new GeneratedSqlWithBindings(sql, bindings);
     }
 
+    /**
+     * Creates a {@link DataSourceValues} with all values of the given {@code columns}.
+     *
+     * @param rs the result set to fetch values from
+     * @param nonEmptyColumns non-empty columns (columns which should not be ignored)
+     * @param columns all columns that were requested for retrieval
+     * @return generated DataSourceValues instance containing the columns' values
+     */
+    private DataSourceValues generateDataSourceValuesObject(ResultSet rs, Set<Column<?, C>> nonEmptyColumns,
+                                                            Column<?, C>[] columns) throws SQLException {
+        DataSourceValuesImpl values = new DataSourceValuesImpl();
+        for (Column<?, C> column : columns) {
+            if (nonEmptyColumns.contains(column)) {
+                values.put(column, resultSetValueRetriever.get(rs, column));
+            } else {
+                values.put(column, null);
+            }
+        }
+        return values;
+    }
 
     /**
      * Wraps {@link PreparedStatement#executeUpdate()} for UPDATE and INSERT statements and returns a boolean
