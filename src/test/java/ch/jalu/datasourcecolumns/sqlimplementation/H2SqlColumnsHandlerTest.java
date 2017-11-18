@@ -15,7 +15,8 @@ public class H2SqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
         HikariConfig config = new HikariConfig();
         config.setDataSourceClassName("org.h2.jdbcx.JdbcDataSource");
         config.setConnectionTestQuery("VALUES 1");
-        config.addDataSourceProperty("URL", "jdbc:h2:mem:test");
+        // Note "ignorecase=true": H2 does not support `COLLATE NOCASE` for case-insensitive equals queries.
+        config.addDataSourceProperty("URL", "jdbc:h2:mem:test;ignorecase=true");
         config.addDataSourceProperty("user", "sa");
         config.addDataSourceProperty("password", "sa");
         HikariDataSource ds = new HikariDataSource(config);

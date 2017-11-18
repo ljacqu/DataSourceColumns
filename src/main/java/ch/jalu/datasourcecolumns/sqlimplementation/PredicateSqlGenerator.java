@@ -4,6 +4,7 @@ import ch.jalu.datasourcecolumns.Column;
 import ch.jalu.datasourcecolumns.predicate.AlwaysTruePredicate;
 import ch.jalu.datasourcecolumns.predicate.AndPredicate;
 import ch.jalu.datasourcecolumns.predicate.ComparingPredicate;
+import ch.jalu.datasourcecolumns.predicate.EqualsIgnoreCasePredicate;
 import ch.jalu.datasourcecolumns.predicate.IsNotNullPredicate;
 import ch.jalu.datasourcecolumns.predicate.IsNullPredicate;
 import ch.jalu.datasourcecolumns.predicate.OrPredicate;
@@ -20,6 +21,7 @@ import java.util.List;
 public class PredicateSqlGenerator<C> {
 
     private final C context;
+    private final boolean useNoCaseCollationForCaseInsensitiveEquals;
 
     /**
      * Constructor.
@@ -27,7 +29,20 @@ public class PredicateSqlGenerator<C> {
      * @param context the context
      */
     public PredicateSqlGenerator(C context) {
+        this(context, false);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param context the context
+     * @param useNoCaseCollationForCaseInsensitiveEquals true to generate SQL with {@code COLLATE NOCASE} for
+     *        {@link EqualsIgnoreCasePredicate}. Not supported and/or needed by all database engines;
+     *        see class JavaDoc on {@link EqualsIgnoreCasePredicate}.
+     */
+    public PredicateSqlGenerator(C context, boolean useNoCaseCollationForCaseInsensitiveEquals) {
         this.context = context;
+        this.useNoCaseCollationForCaseInsensitiveEquals = useNoCaseCollationForCaseInsensitiveEquals;
     }
 
     /**
@@ -48,6 +63,9 @@ public class PredicateSqlGenerator<C> {
         if (clazz == ComparingPredicate.class) {
             ComparingPredicate<?, C> eq = (ComparingPredicate<?, C>) predicate;
             processComparingClause(eq, sqlResult, objects);
+        } else if (clazz == EqualsIgnoreCasePredicate.class) {
+            EqualsIgnoreCasePredicate<C> equalsIgnore = (EqualsIgnoreCasePredicate<C>) predicate;
+            processEqualsIgnoreCasePredicate(equalsIgnore, sqlResult, objects);
         } else if (clazz == OrPredicate.class) {
             OrPredicate<C> or = (OrPredicate<C>) predicate;
             processCombiningClause(or.getLeft(), or.getRight(), "OR", sqlResult, objects);
@@ -77,6 +95,29 @@ public class PredicateSqlGenerator<C> {
             sqlResult.append(predicate.getColumn().resolveName(context))
                 .append(convertComparingTypeToSqlOperator(predicate.getType()))
                 .append("?");
+            objects.add(predicate.getValue());
+        } else {
+            addAlwaysTruePredicate(sqlResult);
+        }
+    }
+
+    /**
+     * Adds the SQL code for the given predicate. Please note that class Javadoc on {@link EqualsIgnoreCasePredicate}
+     * for an important caveat!
+     *
+     * @param predicate the predicate to generate SQL for
+     * @param sqlResult the string builder saving the SQL for all predicates
+     * @param objects list objects to bind to the generated SQL code
+     */
+    protected void processEqualsIgnoreCasePredicate(EqualsIgnoreCasePredicate<C> predicate, StringBuilder sqlResult,
+                                                    List<Object> objects) {
+        if (predicate.getColumn().isColumnUsed(context)) {
+            final String operator = predicate.isNegated() ? " <> ?" : " = ?";
+            sqlResult.append(predicate.getColumn().resolveName(context))
+                .append(operator);
+            if (useNoCaseCollationForCaseInsensitiveEquals) {
+                sqlResult.append(" COLLATE NOCASE");
+            }
             objects.add(predicate.getValue());
         } else {
             addAlwaysTruePredicate(sqlResult);

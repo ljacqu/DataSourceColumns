@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.and;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eq;
+import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.greaterThan;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.greaterThanEquals;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNotNull;
@@ -15,6 +16,7 @@ import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.lessThan;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.lessThanEquals;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEq;
+import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.or;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
@@ -128,5 +130,60 @@ public class PredicateSqlGeneratorTest {
         predicateGenerator.generateWhereClause(unknownPredicate);
 
         // then - expect exception to be thrown
+    }
+
+    @Test
+    public void shouldGenerateEqualsIgnoreCasePredicate() {
+        // given
+        context.setEmptyOptions(true, false, true);
+
+        Predicate<SampleContext> predicate1 = eqIgnoreCase(SampleColumns.NAME, "TEST")
+            .or(notEqIgnoreCase(SampleColumns.EMAIL, "ooo"));
+        Predicate<SampleContext> predicate2 = and(eqIgnoreCase(SampleColumns.EMAIL, "test"),
+            notEqIgnoreCase(SampleColumns.NAME, "bob"));
+        Predicate<SampleContext> predicate3 = and(
+            eqIgnoreCase(SampleColumns.NAME, "_name").or(eq(SampleColumns.NAME, "_Name2")),
+            notEqIgnoreCase(SampleColumns.NAME, "_ForbiddenName"));
+
+        // when
+        GeneratedSqlWithBindings result1 = predicateGenerator.generateWhereClause(predicate1);
+        GeneratedSqlWithBindings result2 = predicateGenerator.generateWhereClause(predicate2);
+        GeneratedSqlWithBindings result3 = predicateGenerator.generateWhereClause(predicate3);
+
+        // then
+        assertThat(result1.getGeneratedSql(), equalTo("(username = ?) OR (1 = 1)"));
+        assertThat(result1.getBindings(), contains("TEST"));
+        assertThat(result2.getGeneratedSql(), equalTo("(1 = 1) AND (username <> ?)"));
+        assertThat(result2.getBindings(), contains("bob"));
+        assertThat(result3.getGeneratedSql(), equalTo("((username = ?) OR (username = ?)) AND (username <> ?)"));
+        assertThat(result3.getBindings(), contains("_name", "_Name2", "_ForbiddenName"));
+    }
+
+    @Test
+    public void shouldGenerateEqualsIgnoreCasePredicateWithSpecialCase() {
+        // given
+        PredicateSqlGenerator<SampleContext> predicateGenerator = new PredicateSqlGenerator<>(context, true);
+        context.setEmptyOptions(true, false, true);
+
+        Predicate<SampleContext> predicate1 = eqIgnoreCase(SampleColumns.NAME, "TEST")
+            .or(notEqIgnoreCase(SampleColumns.EMAIL, "ooo"));
+        Predicate<SampleContext> predicate2 = and(eqIgnoreCase(SampleColumns.EMAIL, "test"),
+            notEqIgnoreCase(SampleColumns.NAME, "bob"));
+        Predicate<SampleContext> predicate3 = and(
+            eqIgnoreCase(SampleColumns.NAME, "_name").or(eq(SampleColumns.NAME, "_Name2")),
+            notEqIgnoreCase(SampleColumns.NAME, "_ForbiddenName"));
+
+        // when
+        GeneratedSqlWithBindings result1 = predicateGenerator.generateWhereClause(predicate1);
+        GeneratedSqlWithBindings result2 = predicateGenerator.generateWhereClause(predicate2);
+        GeneratedSqlWithBindings result3 = predicateGenerator.generateWhereClause(predicate3);
+
+        // then
+        assertThat(result1.getGeneratedSql(), equalTo("(username = ? COLLATE NOCASE) OR (1 = 1)"));
+        assertThat(result1.getBindings(), contains("TEST"));
+        assertThat(result2.getGeneratedSql(), equalTo("(1 = 1) AND (username <> ? COLLATE NOCASE)"));
+        assertThat(result2.getBindings(), contains("bob"));
+        assertThat(result3.getGeneratedSql(), equalTo("((username = ? COLLATE NOCASE) OR (username = ?)) AND (username <> ? COLLATE NOCASE)"));
+        assertThat(result3.getBindings(), contains("_name", "_Name2", "_ForbiddenName"));
     }
 }

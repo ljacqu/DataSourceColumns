@@ -27,6 +27,14 @@ public class StandardPredicates {
         return new ComparingPredicate<>(column, requiredValue, NOT_EQUALS);
     }
 
+    public static <C> EqualsIgnoreCasePredicate<C> eqIgnoreCase(Column<String, C> column, String requiredValue) {
+        return new EqualsIgnoreCasePredicate<>(column, requiredValue, false);
+    }
+
+    public static <C> EqualsIgnoreCasePredicate<C> notEqIgnoreCase(Column<String, C> column, String requiredValue) {
+        return new EqualsIgnoreCasePredicate<>(column, requiredValue, true);
+    }
+
     public static <T, C> ComparingPredicate<T, C> greaterThan(Column<T, C> column, T requiredValue) {
         return new ComparingPredicate<>(column, requiredValue, GREATER);
     }

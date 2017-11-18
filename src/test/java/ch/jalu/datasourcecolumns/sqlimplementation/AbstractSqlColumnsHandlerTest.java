@@ -21,15 +21,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ch.jalu.datasourcecolumns.TestUtils.expectException;
 import static ch.jalu.datasourcecolumns.data.UpdateValues.with;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eq;
+import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.greaterThan;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.greaterThanEquals;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNotNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEq;
+import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.or;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -78,7 +81,12 @@ public abstract class AbstractSqlColumnsHandlerTest {
         }
 
         context = new SampleContext();
-        handler = new SqlColumnsHandler<>(connection, context, TABLE_NAME, ID_COLUMN);
+        if (useNoCaseCollationForIgnoreCasePredicate()) {
+            handler = new SqlColumnsHandler<>(connection::prepareStatement, context, TABLE_NAME, ID_COLUMN,
+                new ResultSetValueRetriever<>(context), new PredicateSqlGenerator<>(context, true));
+        } else {
+            handler = new SqlColumnsHandler<>(connection, context, TABLE_NAME, ID_COLUMN);
+        }
     }
 
     @After
@@ -92,6 +100,10 @@ public abstract class AbstractSqlColumnsHandlerTest {
 
     protected boolean hasSupportForDefaultKeyword() {
         return true;
+    }
+
+    protected boolean useNoCaseCollationForIgnoreCasePredicate() {
+        return false;
     }
 
     @Test
@@ -548,6 +560,35 @@ public abstract class AbstractSqlColumnsHandlerTest {
         assertThat(ipLastLoginCount, equalTo(2));
         assertThat(hasEmailAndIsActiveCount, equalTo(2));
         assertThat(lockedAndActiveSameValue, equalTo(4));
+    }
+
+    @Test
+    public void shouldCountWithCaseInsensitivePredicate() throws SQLException {
+        // given
+        Predicate<SampleContext> predicate = eqIgnoreCase(SampleColumns.EMAIL, "TEST@example.com")
+            .or(eqIgnoreCase(SampleColumns.NAME, "louis"));
+
+        // when
+        int result = handler.count(predicate);
+
+        // then
+        assertThat(result, equalTo(5));
+    }
+
+    @Test
+    public void shouldRetrieveValuesAfterCaseInsensitiveCheck() throws SQLException {
+        // given
+        Predicate<SampleContext> predicate = or( // TODO: create or() with varargs
+            notEqIgnoreCase(SampleColumns.NAME, "HANS").and(eqIgnoreCase(SampleColumns.EMAIL, "OTHER@test.tld")),
+            eqIgnoreCase(SampleColumns.NAME, "keane").and(notEqIgnoreCase(SampleColumns.EMAIL, "TEST@example.COM")))
+            .or(eqIgnoreCase(SampleColumns.NAME, "finn").and(notEqIgnoreCase(SampleColumns.EMAIL, "OTHER@test.tld")));
+
+        // when
+        List<DataSourceValues> result = handler.retrieve(predicate, SampleColumns.NAME);
+
+        // then
+        List<String> names = result.stream().map(entry -> entry.get(SampleColumns.NAME)).collect(Collectors.toList());
+        assertThat(names, containsInAnyOrder("Igor", "Louis", "Finn"));
     }
 
     private static void verifyThrowsException(Runnable runnable) {

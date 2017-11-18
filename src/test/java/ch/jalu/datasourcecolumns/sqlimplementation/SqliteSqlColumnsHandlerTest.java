@@ -19,4 +19,9 @@ public class SqliteSqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
         // SQLite does not support the DEFAULT keyword
         return false;
     }
+
+    @Override
+    protected boolean useNoCaseCollationForIgnoreCasePredicate() {
+        return true;
+    }
 }
