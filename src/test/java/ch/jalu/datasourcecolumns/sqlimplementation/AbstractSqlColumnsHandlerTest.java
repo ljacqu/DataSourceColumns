@@ -34,6 +34,7 @@ import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.or;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
@@ -207,6 +208,45 @@ public abstract class AbstractSqlColumnsHandlerTest {
 
         assertThat(nonExistent.rowExists(), equalTo(false));
         verifyThrowsException(() -> nonExistent.get(SampleColumns.LAST_LOGIN));
+    }
+
+    @Test
+    public void shouldRetrieveValueOfRowsMatchingPredicate() throws SQLException {
+        // given
+        Predicate<SampleContext> predicate = or(eq(SampleColumns.IP, "22.22.22.22"), eq(SampleColumns.IP, "111.111.111.111"))
+            .and(isNotNull(SampleColumns.EMAIL));
+
+        // when
+        List<String> matchingNames = handler.retrieve(predicate, SampleColumns.NAME);
+
+        // then
+        assertThat(matchingNames, containsInAnyOrder("Brett", "Cody", "Finn", "Igor", "Keane"));
+    }
+
+    @Test
+    public void shouldHandleOptionalColumnForPredicateRetrieval() throws SQLException {
+        // given
+        context.setEmptyOptions(true, true, false);
+        Predicate<SampleContext> predicate = greaterThan(SampleColumns.LAST_LOGIN, 123456L);
+
+        // when
+        List<Integer> result = handler.retrieve(predicate, SampleColumns.IS_LOCKED);
+
+        // then
+        assertThat(result, contains(null, null, null, null, null, null));
+    }
+
+    @Test
+    public void shouldReturnEmptyListForNoRowsFulfillingPredicate() throws SQLException {
+        // given
+        Predicate<SampleContext> predicate = eq(SampleColumns.IP, "111.111.111.111")
+            .and(eqIgnoreCase(SampleColumns.EMAIL, "other@test.tld"));
+
+        // when
+        List<Long> result = handler.retrieve(predicate, SampleColumns.LAST_LOGIN);
+
+        // then
+        assertThat(result, empty());
     }
 
     @Test
@@ -584,7 +624,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
             .or(eqIgnoreCase(SampleColumns.NAME, "finn").and(notEqIgnoreCase(SampleColumns.EMAIL, "OTHER@test.tld")));
 
         // when
-        List<DataSourceValues> result = handler.retrieve(predicate, SampleColumns.NAME);
+        List<DataSourceValues> result = handler.retrieve(predicate, SampleColumns.NAME, SampleColumns.EMAIL);
 
         // then
         List<String> names = result.stream().map(entry -> entry.get(SampleColumns.NAME)).collect(Collectors.toList());

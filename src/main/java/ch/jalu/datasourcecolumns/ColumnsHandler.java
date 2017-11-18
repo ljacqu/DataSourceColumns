@@ -37,6 +37,16 @@ public interface ColumnsHandler<C, I> {
     DataSourceValues retrieve(I identifier, Column<?, C>... columns) throws Exception;
 
     /**
+     * Retrieves a column's value for all rows that satisfy the given predicate.
+     *
+     * @param predicate the predicate to fulfill
+     * @param column the column to retrieve from the matching rows
+     * @param <T> the column's value type
+     * @return the values of the matching rows
+     */
+    <T> List<T> retrieve(Predicate<C> predicate, Column<T, C> column) throws Exception;
+
+    /**
      * Retrieves the given columns' values from all rows that satisfy the given predicate.
      *
      * @param predicate the predicate to fulfill

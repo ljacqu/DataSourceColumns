@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -107,6 +108,30 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
                     : DataSourceValuesImpl.unknownRow();
             }
         }
+    }
+
+    @Override
+    public <T> List<T> retrieve(Predicate<C> predicate, Column<T, C> column) throws SQLException {
+        final boolean isColumnUsed = column.isColumnUsed(context);
+        if (!isColumnUsed) {
+            final int matchingRows = count(predicate);
+            return Collections.nCopies(matchingRows, null);
+        }
+
+        final GeneratedSqlWithBindings sqlPredicate = predicateSqlGenerator.generateWhereClause(predicate);
+        final String sql = "SELECT " + column.resolveName(context)
+            + " FROM " + tableName + " WHERE " + sqlPredicate.getGeneratedSql();
+
+        List<T> results = new ArrayList<>();
+        try (PreparedStatement pst = preparedStatementGenerator.create(sql)) {
+            bindValues(pst, 1, sqlPredicate.getBindings());
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    results.add(resultSetValueRetriever.get(rs, column));
+                }
+            }
+        }
+        return results;
     }
 
     @Override
