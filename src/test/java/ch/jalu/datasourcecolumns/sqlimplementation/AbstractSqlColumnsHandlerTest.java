@@ -60,6 +60,8 @@ public abstract class AbstractSqlColumnsHandlerTest {
     private static final ColumnImpl<String> COL_EMAIL = new ColumnImpl<>("email", StandardTypes.STRING);
     private static final ColumnImpl<Long> COL_LAST_LOGIN = new ColumnImpl<>("last_login", StandardTypes.LONG);
     private static final ColumnImpl<Integer> COL_IS_LOCKED = new ColumnImpl<>("is_locked", StandardTypes.INTEGER);
+    private static final ColumnImpl<Float> COL_RATIO_FLOAT = new ColumnImpl<>("ratio", StandardTypes.FLOAT);
+    private static final ColumnImpl<Double> COL_RATIO_DOUBLE = new ColumnImpl<>("ratio", StandardTypes.DOUBLE);
 
     private Connection connection;
     private SqlColumnsHandler<SampleContext, Integer> handler;
@@ -153,15 +155,15 @@ public abstract class AbstractSqlColumnsHandlerTest {
         assertThat(hansValues.get(SampleColumns.NAME), equalTo("Hans"));
         assertThat(hansValues.get(SampleColumns.IS_LOCKED), equalTo(1));
         assertThat(hansValues.get(SampleColumns.LAST_LOGIN), equalTo(77665544L));
-        verifyThrowsException(() -> hansValues.get(SampleColumns.ID));
+        verifyThrowsNoValueAvailableException(() -> hansValues.get(SampleColumns.ID));
 
         assertThat(finnValues.get(SampleColumns.NAME), equalTo("Finn"));
         assertThat(finnValues.get(SampleColumns.IS_LOCKED), equalTo(0));
         assertThat(finnValues.get(SampleColumns.LAST_LOGIN), nullValue());
-        verifyThrowsException(() -> finnValues.get(SampleColumns.IS_ACTIVE));
+        verifyThrowsNoValueAvailableException(() -> finnValues.get(SampleColumns.IS_ACTIVE));
 
         assertThat(nonExistent.rowExists(), equalTo(false));
-        verifyThrowsException(() -> nonExistent.get(SampleColumns.NAME));
+        verifyThrowsNoValueAvailableException(() -> nonExistent.get(SampleColumns.NAME));
     }
 
     @Test
@@ -179,15 +181,15 @@ public abstract class AbstractSqlColumnsHandlerTest {
         assertThat(hansValues.get(SampleColumns.NAME), equalTo("Hans"));
         assertThat(hansValues.get(SampleColumns.IS_LOCKED), equalTo(1));
         assertThat(hansValues.get(SampleColumns.LAST_LOGIN), nullValue());
-        verifyThrowsException(() -> hansValues.get(SampleColumns.ID));
+        verifyThrowsNoValueAvailableException(() -> hansValues.get(SampleColumns.ID));
 
         assertThat(finnValues.get(SampleColumns.NAME), equalTo("Finn"));
         assertThat(finnValues.get(SampleColumns.IS_LOCKED), equalTo(0));
         assertThat(finnValues.get(SampleColumns.LAST_LOGIN), nullValue());
-        verifyThrowsException(() -> finnValues.get(SampleColumns.IS_ACTIVE));
+        verifyThrowsNoValueAvailableException(() -> finnValues.get(SampleColumns.IS_ACTIVE));
 
         assertThat(nonExistent.rowExists(), equalTo(false));
-        verifyThrowsException(() -> nonExistent.get(SampleColumns.LAST_LOGIN));
+        verifyThrowsNoValueAvailableException(() -> nonExistent.get(SampleColumns.LAST_LOGIN));
     }
 
     @Test
@@ -204,10 +206,10 @@ public abstract class AbstractSqlColumnsHandlerTest {
         assertThat(hansValues.rowExists(), equalTo(true));
         assertThat(hansValues.get(SampleColumns.EMAIL), nullValue());
         assertThat(hansValues.get(SampleColumns.LAST_LOGIN), nullValue());
-        verifyThrowsException(() -> hansValues.get(SampleColumns.ID));
+        verifyThrowsNoValueAvailableException(() -> hansValues.get(SampleColumns.ID));
 
         assertThat(nonExistent.rowExists(), equalTo(false));
-        verifyThrowsException(() -> nonExistent.get(SampleColumns.LAST_LOGIN));
+        verifyThrowsNoValueAvailableException(() -> nonExistent.get(SampleColumns.LAST_LOGIN));
     }
 
     @Test
@@ -511,7 +513,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldThrowExceptionForInsertWithNoNonEmptyColumns() throws SQLException {
+    public void shouldThrowExceptionForInsertWithNoNonEmptyColumns() {
         // given
         context.setEmptyOptions(true, true, false);
         UpdateValues<SampleContext> values =
@@ -631,7 +633,22 @@ public abstract class AbstractSqlColumnsHandlerTest {
         assertThat(names, containsInAnyOrder("Igor", "Louis", "Finn"));
     }
 
-    private static void verifyThrowsException(Runnable runnable) {
+    @Test
+    public void shouldRetrieveFloatsAndDoubles() throws SQLException {
+        // given / when
+        DataSourceValue<Double> ratioDouble = handler.retrieve(4, COL_RATIO_DOUBLE);
+        DataSourceValue<Float> ratioFloat = handler.retrieve(4, COL_RATIO_FLOAT);
+        DataSourceValue<Double> ratioDoubleEmpty = handler.retrieve(6, COL_RATIO_DOUBLE);
+        DataSourceValue<Float> ratioFloatEmpty = handler.retrieve(6, COL_RATIO_FLOAT);
+
+        // then
+        assertThat(ratioDouble.getValue(), equalTo(-4.04));
+        assertThat(ratioFloat.getValue(), equalTo(-4.04f));
+        assertThat(ratioDoubleEmpty.getValue(), nullValue());
+        assertThat(ratioFloatEmpty.getValue(), nullValue());
+    }
+
+    private static void verifyThrowsNoValueAvailableException(Runnable runnable) {
         IllegalArgumentException ex = expectException(IllegalArgumentException.class, runnable::run);
         assertThat(ex.getMessage(), containsString("No value available for column"));
     }

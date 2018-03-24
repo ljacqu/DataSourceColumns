@@ -19,6 +19,12 @@ public final class StandardTypes<T> implements ColumnType<T> {
     /** Boolean type. */
     public static final ColumnType<Boolean> BOOLEAN = new StandardTypes<>(Boolean.class);
 
+    /** Double type. */
+    public static final ColumnType<Double> DOUBLE = new StandardTypes<>(Double.class);
+
+    /** Float type. */
+    public static final ColumnType<Float> FLOAT = new StandardTypes<>(Float.class);
+
 
     private final Class<T> clazz;
 

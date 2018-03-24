@@ -61,6 +61,10 @@ public class ResultSetValueRetriever<C> {
             resultSetGetter = getTypeNullable(ResultSet::getInt, 0);
         } else if (type == StandardTypes.BOOLEAN) {
             resultSetGetter = getTypeNullable(ResultSet::getBoolean, false);
+        } else if (type == StandardTypes.DOUBLE) {
+            resultSetGetter = getTypeNullable(ResultSet::getDouble, 0.0);
+        } else if (type == StandardTypes.FLOAT) {
+            resultSetGetter = getTypeNullable(ResultSet::getFloat, 0.0f);
         } else {
             throw new IllegalArgumentException("Unhandled type '" + type + "'");
         }
