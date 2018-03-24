@@ -87,6 +87,26 @@ public interface ColumnsHandler<C, I> {
     <D> boolean update(I identifier, D dependent, DependentColumn<?, C, D>... columns) throws Exception;
 
     /**
+     * Sets the given value to the provided column for all rows which match the predicate.
+     *
+     * @param predicate the predicate to filter rows by
+     * @param column the column to modify on the matched rows
+     * @param value the new value to set
+     * @param <T> the column type
+     * @return number of modified rows
+     */
+    <T> int update(Predicate<C> predicate, Column<T, C> column, T value) throws Exception;
+
+    /**
+     * Updates all rows that match the given predicate with the provided values.
+     *
+     * @param predicate the predicate to filter rows by
+     * @param updateValues the values to set on the matched rows
+     * @return number of modified rows
+     */
+    int update(Predicate<C> predicate, UpdateValues<C> updateValues) throws Exception;
+
+    /**
      * Inserts the given values into a new row.
      *
      * @param updateValues the values to insert

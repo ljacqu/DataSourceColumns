@@ -194,6 +194,16 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
     }
 
     @Override
+    public <T> int update(Predicate<C> predicate, Column<T, C> column, T value) throws SQLException {
+        return update(predicate, UpdateValues.with(column, value).build());
+    }
+
+    @Override
+    public int update(Predicate<C> predicate, UpdateValues<C> updateValues) throws SQLException {
+        return performPredicateUpdate(predicate, updateValues);
+    }
+
+    @Override
     public boolean insert(UpdateValues<C> updateValues) throws SQLException {
         return performInsert(updateValues.getColumns(), updateValues::get);
     }
@@ -233,6 +243,23 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
             int index = bindValues(pst, 1, columnSetList.getBindings());
             pst.setObject(index, identifier);
             return performUpdateAction(pst);
+        }
+    }
+
+    private int performPredicateUpdate(Predicate<C> predicate, UpdateValues<C> updateValues) throws SQLException {
+        final Set<Column<?, C>> nonEmptyColumns = removeSkippedColumns(updateValues.getColumns());
+        if (nonEmptyColumns.isEmpty()) {
+            return 0;
+        }
+
+        final GeneratedSqlWithBindings columnSetList = createColumnsListForUpdate(nonEmptyColumns, updateValues::get);
+        final GeneratedSqlWithBindings whereClause = predicateSqlGenerator.generateWhereClause(predicate);
+        final String sql = "UPDATE " + tableName + " SET " + columnSetList.getGeneratedSql()
+            + " WHERE " + whereClause.getGeneratedSql();
+        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+            int index = bindValues(pst, 1, columnSetList.getBindings());
+            bindValues(pst, index, whereClause.getBindings());
+            return pst.executeUpdate();
         }
     }
 

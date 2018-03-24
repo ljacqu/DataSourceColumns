@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static ch.jalu.datasourcecolumns.TestUtils.expectException;
 import static ch.jalu.datasourcecolumns.data.UpdateValues.with;
+import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.and;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.greaterThan;
@@ -647,6 +648,49 @@ public abstract class AbstractSqlColumnsHandlerTest {
         assertThat(ratioFloat.getValue(), equalTo(-4.04f));
         assertThat(ratioDoubleEmpty.getValue(), nullValue());
         assertThat(ratioFloatEmpty.getValue(), nullValue());
+    }
+
+    @Test
+    public void shouldUpdateByPredicate() throws SQLException {
+        // given
+        Predicate<SampleContext> predicate = eq(SampleColumns.IP, "22.22.22.22").and(isNotNull(SampleColumns.EMAIL));
+
+        // when
+        int updatedRows = handler.update(predicate, SampleColumns.LAST_LOGIN, 1L);
+
+        // then
+        assertThat(updatedRows, equalTo(3));
+        assertThat(handler.retrieve(3, SampleColumns.LAST_LOGIN).getValue(), equalTo(1L));
+        assertThat(handler.retrieve(9, SampleColumns.LAST_LOGIN).getValue(), equalTo(1L));
+        assertThat(handler.retrieve(11, SampleColumns.LAST_LOGIN).getValue(), equalTo(1L));
+        // assert unchanged
+        assertThat(handler.retrieve(4, SampleColumns.LAST_LOGIN).getValue(), nullValue());
+    }
+
+    @Test
+    public void shouldUpdateMultipleValuesByPredicate() throws SQLException {
+        // given
+        Predicate<SampleContext> predicate = and(
+            greaterThanEquals(SampleColumns.LAST_LOGIN, 732452L),
+            eq(SampleColumns.EMAIL, "other@test.tld"));
+        UpdateValues<SampleContext> values = UpdateValues.with(SampleColumns.IP, "34.34.34.34")
+            .and(SampleColumns.IS_ACTIVE, 1).build();
+
+        // when
+        int updatedRows = handler.update(predicate, values);
+
+        // then
+        assertThat(updatedRows, equalTo(2));
+        assertThat(handler.retrieve(8, SampleColumns.IS_ACTIVE).getValue(), equalTo(1));
+        assertThat(handler.retrieve(8, SampleColumns.IP).getValue(), equalTo("34.34.34.34"));
+        assertThat(handler.retrieve(12, SampleColumns.IS_ACTIVE).getValue(), equalTo(1));
+        assertThat(handler.retrieve(12, SampleColumns.IP).getValue(), equalTo("34.34.34.34"));
+        // assert unchanged
+        assertThat(handler.retrieve(9, SampleColumns.IP).getValue(), equalTo("22.22.22.22"));
+        assertThat(handler.retrieve(3, SampleColumns.IS_ACTIVE).getValue(), equalTo(0));
+        assertThat(handler.retrieve(3, SampleColumns.IP).getValue(), equalTo("22.22.22.22"));
+        assertThat(handler.retrieve(5, SampleColumns.IS_ACTIVE).getValue(), equalTo(1));
+        assertThat(handler.retrieve(5, SampleColumns.IP).getValue(), nullValue());
     }
 
     private static void verifyThrowsNoValueAvailableException(Runnable runnable) {
