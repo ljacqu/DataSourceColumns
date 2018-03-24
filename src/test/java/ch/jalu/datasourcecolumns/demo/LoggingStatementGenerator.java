@@ -1,9 +1,9 @@
 package ch.jalu.datasourcecolumns.demo;
 
 import ch.jalu.datasourcecolumns.sqlimplementation.PreparedStatementGenerator;
+import ch.jalu.datasourcecolumns.sqlimplementation.PreparedStatementResult;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class LoggingStatementGenerator implements PreparedStatementGenerator {
@@ -15,8 +15,8 @@ public class LoggingStatementGenerator implements PreparedStatementGenerator {
     }
 
     @Override
-    public PreparedStatement create(String sql) throws SQLException {
+    public PreparedStatementResult create(String sql) throws SQLException {
         System.out.println(" Generated SQL: " + sql);
-        return connection.prepareStatement(sql);
+        return new PreparedStatementResult(connection.prepareStatement(sql));
     }
 }

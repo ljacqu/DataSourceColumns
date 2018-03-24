@@ -29,7 +29,7 @@ public final class DemoDatabaseInitializer {
         }
     }
 
-    private void createTable() throws IllegalAccessException, SQLException {
+    private void createTable() throws SQLException {
 
         // Initialize database with name column (primary key - may not be skipped)
         String nameColumn = PersonColumns.NAME.resolveName(configuration);
