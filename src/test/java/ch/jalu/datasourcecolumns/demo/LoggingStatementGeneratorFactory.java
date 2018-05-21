@@ -1,11 +1,10 @@
 package ch.jalu.datasourcecolumns.demo;
 
+import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGenerator;
 import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGeneratorFactory;
-import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementResult;
-import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.SimplePreparedStatementResult;
+import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.SimplePreparedStatementGenerator;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 
 public class LoggingStatementGeneratorFactory implements PreparedStatementGeneratorFactory {
 
@@ -16,8 +15,8 @@ public class LoggingStatementGeneratorFactory implements PreparedStatementGenera
     }
 
     @Override
-    public PreparedStatementResult create(String sql) throws SQLException {
+    public PreparedStatementGenerator create(String sql) {
         System.out.println(" Generated SQL: " + sql);
-        return new SimplePreparedStatementResult(connection.prepareStatement(sql));
+        return new SimplePreparedStatementGenerator(connection, sql);
     }
 }

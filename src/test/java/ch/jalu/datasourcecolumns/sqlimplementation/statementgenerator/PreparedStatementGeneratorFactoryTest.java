@@ -11,7 +11,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 /**
  * Test for {@link PreparedStatementGeneratorFactory}.
@@ -28,10 +27,9 @@ public class PreparedStatementGeneratorFactoryTest {
         String sql = "SELECT 1 FROM table WHERE name = ?";
 
         // when
-        PreparedStatementResult result = generatorFactory.create(sql);
+        PreparedStatementGenerator generator = generatorFactory.create(sql);
 
         // then
-        verify(connection).prepareStatement(sql);
-        assertThat(result.getPreparedStatement(), equalTo(pst));
+        assertThat(generator.createStatement(), equalTo(pst));
     }
 }

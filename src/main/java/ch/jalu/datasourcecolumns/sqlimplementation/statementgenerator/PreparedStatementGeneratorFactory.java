@@ -1,10 +1,9 @@
 package ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
- * Creates {@link PreparedStatementResult} objects.
+ * Creates {@link PreparedStatementGenerator} objects.
  */
 @FunctionalInterface
 public interface PreparedStatementGeneratorFactory {
@@ -15,7 +14,7 @@ public interface PreparedStatementGeneratorFactory {
      * @param sql the sql code to create a generator for
      * @return the generator for the given sql code
      */
-    PreparedStatementResult create(String sql) throws SQLException;
+    PreparedStatementGenerator create(String sql);
 
     /**
      * Creates a generator factory based on the given connection.
@@ -24,6 +23,6 @@ public interface PreparedStatementGeneratorFactory {
      * @return created generator
      */
     static PreparedStatementGeneratorFactory fromConnection(Connection con) {
-        return sql -> new SimplePreparedStatementResult(con.prepareStatement(sql));
+        return sql -> new SimplePreparedStatementGenerator(con, sql);
     }
 }

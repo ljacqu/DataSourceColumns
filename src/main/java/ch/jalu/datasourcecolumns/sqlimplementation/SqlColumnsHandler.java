@@ -10,7 +10,7 @@ import ch.jalu.datasourcecolumns.data.DataSourceValuesImpl;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
 import ch.jalu.datasourcecolumns.predicate.Predicate;
 import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGeneratorFactory;
-import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementResult;
+import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGenerator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -83,8 +83,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final String columnName = isColumnUsed ? column.resolveName(context) : "1";
         final String sql = "SELECT " + columnName + " FROM " + tableName + " WHERE " + idColumn + " = ?;";
 
-        try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-            final PreparedStatement pst = result.getPreparedStatement();
+        try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+            final PreparedStatement pst = generator.createStatement();
             pst.setObject(1, identifier);
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
@@ -103,8 +103,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final String sql = "SELECT " + (nonEmptyColumns.isEmpty() ? "1" : commaSeparatedList(nonEmptyColumns))
             + " FROM " + tableName + " WHERE " + idColumn + " = ?;";
 
-        try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-            final PreparedStatement pst = result.getPreparedStatement();
+        try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+            final PreparedStatement pst = generator.createStatement();
             pst.setObject(1, identifier);
             try (ResultSet rs = pst.executeQuery()) {
                 return rs.next()
@@ -127,8 +127,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
             + " FROM " + tableName + " WHERE " + sqlPredicate.getGeneratedSql();
 
         List<T> results = new ArrayList<>();
-        try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-            final PreparedStatement pst = result.getPreparedStatement();
+        try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+            final PreparedStatement pst = generator.createStatement();
             bindValues(pst, 1, sqlPredicate.getBindings());
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) {
@@ -148,8 +148,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
             + " FROM " + tableName + " WHERE " + sqlPredicate.getGeneratedSql();
 
         List<DataSourceValues> matchingEntries = new ArrayList<>();
-        try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-            final PreparedStatement pst = result.getPreparedStatement();
+        try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+            final PreparedStatement pst = generator.createStatement();
             bindValues(pst, 1, sqlPredicate.getBindings());
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) {
@@ -168,16 +168,16 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         } else if (value == null && column.useDefaultForNullValue(context)) {
             String sql = "UPDATE " + tableName + " SET " + column.resolveName(context)
                 + " = DEFAULT WHERE " + idColumn + " = ?;";
-            try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-                final PreparedStatement pst = result.getPreparedStatement();
+            try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+                final PreparedStatement pst = generator.createStatement();
                 pst.setObject(1, identifier);
                 return performUpdateAction(pst);
             }
         }
         String sql = "UPDATE " + tableName + " SET " + column.resolveName(context)
             + " = ? WHERE " + idColumn + " = ?;";
-        try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-            final PreparedStatement pst = result.getPreparedStatement();
+        try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+            final PreparedStatement pst = generator.createStatement();
             pst.setObject(1, value);
             pst.setObject(2, identifier);
             return performUpdateAction(pst);
@@ -226,8 +226,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
     public int count(Predicate<C> predicate) throws SQLException {
         GeneratedSqlWithBindings whereResult = predicateSqlGenerator.generateWhereClause(predicate);
         String sql = "SELECT COUNT(1) FROM " + tableName + " WHERE " + whereResult.getGeneratedSql();
-        try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-            final PreparedStatement pst = result.getPreparedStatement();
+        try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+            final PreparedStatement pst = generator.createStatement();
             bindValues(pst, 1, whereResult.getBindings());
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
@@ -248,8 +248,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final GeneratedSqlWithBindings columnSetList = createColumnsListForUpdate(nonEmptyColumns, valueGetter);
         final String sql = "UPDATE " + tableName + " SET "
             + columnSetList.getGeneratedSql() + " WHERE " + idColumn + " = ?;";
-        try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-            final PreparedStatement pst = result.getPreparedStatement();
+        try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+            final PreparedStatement pst = generator.createStatement();
             int index = bindValues(pst, 1, columnSetList.getBindings());
             pst.setObject(index, identifier);
             return performUpdateAction(pst);
@@ -266,8 +266,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final GeneratedSqlWithBindings whereClause = predicateSqlGenerator.generateWhereClause(predicate);
         final String sql = "UPDATE " + tableName + " SET " + columnSetList.getGeneratedSql()
             + " WHERE " + whereClause.getGeneratedSql();
-        try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-            final PreparedStatement pst = result.getPreparedStatement();
+        try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+            final PreparedStatement pst = generator.createStatement();
             int index = bindValues(pst, 1, columnSetList.getBindings());
             bindValues(pst, index, whereClause.getBindings());
             return pst.executeUpdate();
@@ -302,8 +302,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final GeneratedSqlWithBindings placeholders = createValuePlaceholdersForInsert(nonEmptyColumns, valueGetter);
         final String sql = "INSERT INTO " + tableName + " (" + commaSeparatedList(nonEmptyColumns) + ") "
             + "VALUES(" + placeholders.getGeneratedSql() + ");";
-        try (PreparedStatementResult result = statementGeneratorFactory.create(sql)) {
-            final PreparedStatement pst = result.getPreparedStatement();
+        try (PreparedStatementGenerator generator = statementGeneratorFactory.create(sql)) {
+            final PreparedStatement pst = generator.createStatement();
             bindValues(pst, 1, placeholders.getBindings());
             return performUpdateAction(pst);
         }
