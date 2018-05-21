@@ -35,7 +35,7 @@ import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.or;
-import static ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGeneratorFactory.fromConnection;
+import static ch.jalu.datasourcecolumns.sqlimplementation.SqlColumnsHandlerConfig.forSingleConnection;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -86,12 +86,11 @@ public abstract class AbstractSqlColumnsHandlerTest {
         }
 
         context = new SampleContext();
+        SqlColumnsHandlerConfig<SampleContext> config = forSingleConnection(connection, TABLE_NAME, ID_COLUMN, context);
         if (useNoCaseCollationForIgnoreCasePredicate()) {
-            handler = new SqlColumnsHandler<>(fromConnection(connection), context, TABLE_NAME, ID_COLUMN,
-                new ResultSetValueRetriever<>(context), new PredicateSqlGenerator<>(context, true));
-        } else {
-            handler = new SqlColumnsHandler<>(connection, context, TABLE_NAME, ID_COLUMN);
+            config.setPredicateSqlGenerator(new PredicateSqlGenerator<>(context, true));
         }
+        handler = new SqlColumnsHandler<>(config);
     }
 
     @After

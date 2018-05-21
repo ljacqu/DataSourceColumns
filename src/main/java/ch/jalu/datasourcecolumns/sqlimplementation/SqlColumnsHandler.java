@@ -9,10 +9,9 @@ import ch.jalu.datasourcecolumns.data.DataSourceValues;
 import ch.jalu.datasourcecolumns.data.DataSourceValuesImpl;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
 import ch.jalu.datasourcecolumns.predicate.Predicate;
-import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGeneratorFactory;
 import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGenerator;
+import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGeneratorFactory;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,8 +25,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGeneratorFactory.fromConnection;
-
 /**
  * Implementation of {@link ColumnsHandler} for a SQL data source.
  *
@@ -36,45 +33,25 @@ import static ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.Pre
  */
 public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
 
-    private final PreparedStatementGeneratorFactory statementGeneratorFactory;
     private final String tableName;
     private final String idColumn;
+    private final C context;
+    private final PreparedStatementGeneratorFactory statementGeneratorFactory;
     private final ResultSetValueRetriever<C> resultSetValueRetriever;
     private final PredicateSqlGenerator<C> predicateSqlGenerator;
-    private final C context;
 
     /**
      * Constructor.
      *
-     * @param connection connection to the database
-     * @param context the context object (for name resolution)
-     * @param tableName name of the SQL table
-     * @param idColumn the name of the identifier column
+     * @param config the SQL handler config to base the instance on
      */
-    public SqlColumnsHandler(Connection connection, C context, String tableName, String idColumn) {
-        this(fromConnection(connection), context, tableName, idColumn,
-            new ResultSetValueRetriever<>(context), new PredicateSqlGenerator<>(context));
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param statementGeneratorFactory factory for creating PreparedStatement generators
-     * @param context the context object (for name resolution)
-     * @param tableName name of the SQL table
-     * @param idColumn the name of the identifier column
-     * @param resultSetValueRetriever instance to use to retrieve values from a result set
-     * @param predicateSqlGenerator SQL generator for predicates
-     */
-    public SqlColumnsHandler(PreparedStatementGeneratorFactory statementGeneratorFactory, C context, String tableName,
-                             String idColumn, ResultSetValueRetriever<C> resultSetValueRetriever,
-                             PredicateSqlGenerator<C> predicateSqlGenerator) {
-        this.context = context;
-        this.resultSetValueRetriever = resultSetValueRetriever;
-        this.predicateSqlGenerator = predicateSqlGenerator;
-        this.tableName = tableName;
-        this.statementGeneratorFactory = statementGeneratorFactory;
-        this.idColumn = idColumn;
+    public SqlColumnsHandler(SqlColumnsHandlerConfig<C> config) {
+        this.tableName = config.getTableName();
+        this.idColumn = config.getIdColumn();
+        this.context = config.getContext();
+        this.statementGeneratorFactory = config.getStatementGeneratorFactory();
+        this.resultSetValueRetriever = config.getResultSetValueRetriever();
+        this.predicateSqlGenerator = config.getPredicateSqlGenerator();
     }
 
     @Override

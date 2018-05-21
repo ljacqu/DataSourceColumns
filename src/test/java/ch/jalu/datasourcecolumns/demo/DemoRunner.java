@@ -3,9 +3,8 @@ package ch.jalu.datasourcecolumns.demo;
 import ch.jalu.datasourcecolumns.ColumnsHandler;
 import ch.jalu.datasourcecolumns.data.DataSourceValues;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
-import ch.jalu.datasourcecolumns.sqlimplementation.PredicateSqlGenerator;
-import ch.jalu.datasourcecolumns.sqlimplementation.ResultSetValueRetriever;
 import ch.jalu.datasourcecolumns.sqlimplementation.SqlColumnsHandler;
+import ch.jalu.datasourcecolumns.sqlimplementation.SqlColumnsHandlerConfig;
 
 import java.sql.Connection;
 import java.util.Arrays;
@@ -13,6 +12,7 @@ import java.util.List;
 
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.greaterThan;
+import static ch.jalu.datasourcecolumns.sqlimplementation.SqlColumnsHandlerConfig.forSingleConnection;
 
 /**
  * Small demo of the {@code datasourcecolumns} project.
@@ -36,9 +36,9 @@ public class DemoRunner {
 
         // Create columns handler
         String idName = PersonColumns.NAME.resolveName(configuration);
-        ColumnsHandler<Configuration, String> columnsHandler =
-            new SqlColumnsHandler<>(new LoggingStatementGeneratorFactory(connection), configuration, "tbl", idName,
-                new ResultSetValueRetriever<>(configuration), new PredicateSqlGenerator<>(configuration));
+        SqlColumnsHandlerConfig<Configuration> config = forSingleConnection(connection, "tbl", idName, configuration)
+            .setPreparedStatementGeneratorFactory(new LoggingStatementGeneratorFactory(connection));
+        ColumnsHandler<Configuration, String> columnsHandler = new SqlColumnsHandler<>(config);
 
         // Run demo!
         System.out.println();
