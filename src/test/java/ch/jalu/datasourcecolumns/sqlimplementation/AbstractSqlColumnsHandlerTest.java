@@ -16,9 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,7 +33,6 @@ import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.or;
-import static ch.jalu.datasourcecolumns.sqlimplementation.SqlColumnsHandlerConfig.forSingleConnection;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -65,28 +62,24 @@ public abstract class AbstractSqlColumnsHandlerTest {
     private static final ColumnImpl<Float> COL_RATIO_FLOAT = new ColumnImpl<>("ratio", StandardTypes.FLOAT);
     private static final ColumnImpl<Double> COL_RATIO_DOUBLE = new ColumnImpl<>("ratio", StandardTypes.DOUBLE);
 
-    private Connection connection;
+    private ConnectionInfo connectionInfo;
     private SqlColumnsHandler<SampleContext, Integer> handler;
     private SampleContext context;
 
     @Before
     public void setUpConnection() throws Exception {
-        connection = createConnection();
+        connectionInfo = createConnection();
 
         InputStream is = getClass().getClassLoader().getResourceAsStream("sample-database.sql");
         // We can only run one statement per Statement.execute() so we split
         // the string by ";\n" as to get the individual statements
         String[] sqlInitialize = TestUtils.readToString(is).split(";(\\r?)\\n");
 
-        try (Statement st = connection.createStatement()) {
-            st.execute("DROP TABLE IF EXISTS " + TABLE_NAME);
-            for (String statement : sqlInitialize) {
-                st.execute(statement);
-            }
-        }
+        connectionInfo.executeStatements("DROP TABLE IF EXISTS " + TABLE_NAME);
+        connectionInfo.executeStatements(sqlInitialize);
 
         context = new SampleContext();
-        SqlColumnsHandlerConfig<SampleContext> config = forSingleConnection(connection, TABLE_NAME, ID_COLUMN, context);
+        SqlColumnsHandlerConfig<SampleContext> config = connectionInfo.createHandlerConfig(TABLE_NAME, ID_COLUMN, context);
         if (useNoCaseCollationForIgnoreCasePredicate()) {
             config.setPredicateSqlGenerator(new PredicateSqlGenerator<>(context, true));
         }
@@ -95,12 +88,12 @@ public abstract class AbstractSqlColumnsHandlerTest {
 
     @After
     public void tearDownConnection() throws Exception {
-        if (connection != null) {
-            connection.close();
+        if (connectionInfo != null) {
+            connectionInfo.closeConnection();
         }
     }
 
-    protected abstract Connection createConnection() throws Exception;
+    protected abstract ConnectionInfo createConnection() throws Exception;
 
     protected boolean hasSupportForDefaultKeyword() {
         return true;

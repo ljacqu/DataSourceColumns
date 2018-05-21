@@ -1,9 +1,9 @@
 package ch.jalu.datasourcecolumns.sqlimplementation;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import org.h2.jdbcx.JdbcDataSource;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
+import java.sql.SQLException;
 
 /**
  * Test for {@link SqlColumnsHandler}, using an in-memory H2 database.
@@ -11,15 +11,15 @@ import java.sql.Connection;
 public class H2SqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
 
     @Override
-    protected Connection createConnection() throws Exception {
-        HikariConfig config = new HikariConfig();
-        config.setDataSourceClassName("org.h2.jdbcx.JdbcDataSource");
-        config.setConnectionTestQuery("VALUES 1");
+    protected ConnectionInfo createConnection() throws SQLException {
+        DataSource dataSource = createDataSource();
+        return new ConnectionInfo(dataSource.getConnection());
+    }
+
+    protected DataSource createDataSource() {
+        JdbcDataSource dataSource = new JdbcDataSource();
         // Note "ignorecase=true": H2 does not support `COLLATE NOCASE` for case-insensitive equals queries.
-        config.addDataSourceProperty("URL", "jdbc:h2:mem:test;ignorecase=true");
-        config.addDataSourceProperty("user", "sa");
-        config.addDataSourceProperty("password", "sa");
-        HikariDataSource ds = new HikariDataSource(config);
-        return ds.getConnection();
+        dataSource.setURL("jdbc:h2:mem:test;ignorecase=true");
+        return dataSource;
     }
 }

@@ -1,7 +1,9 @@
 package ch.jalu.datasourcecolumns.sqlimplementation;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
+import org.sqlite.SQLiteDataSource;
+
+import javax.sql.DataSource;
+import java.sql.SQLException;
 
 /**
  * Test for {@link SqlColumnsHandler}, using an in-memory SQLite database.
@@ -9,9 +11,15 @@ import java.sql.DriverManager;
 public class SqliteSqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
 
     @Override
-    protected Connection createConnection() throws Exception {
-        Class.forName("org.sqlite.JDBC");
-        return DriverManager.getConnection("jdbc:sqlite::memory:");
+    protected ConnectionInfo createConnection() throws SQLException {
+        return new ConnectionInfo(
+            createDataSource().getConnection());
+    }
+
+    protected DataSource createDataSource() {
+        SQLiteDataSource dataSource = new SQLiteDataSource();
+        dataSource.setUrl("jdbc:sqlite::memory:");
+        return dataSource;
     }
 
     @Override

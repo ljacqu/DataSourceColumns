@@ -15,7 +15,12 @@ import java.util.Properties;
 public class MySqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
 
     @Override
-    protected Connection createConnection() throws Exception {
+    protected ConnectionInfo createConnection() throws Exception {
+        Connection connection = DriverManager.getConnection(createJdbcUrl());
+        return new ConnectionInfo(connection);
+    }
+
+    protected String createJdbcUrl() throws IOException {
         Properties properties = loadProperties();
         String host = properties.getProperty("mysql.host");
         String port = getPort(properties);
@@ -23,10 +28,8 @@ public class MySqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
         String user = properties.getProperty("mysql.username");
         String pass = properties.getProperty("mysql.password");
 
-        String jdbcUrl = "jdbc:mysql://" + host + port + "/" + database
+        return "jdbc:mysql://" + host + port + "/" + database
             + "?user=" + user + "&password=" + pass;
-
-        return DriverManager.getConnection(jdbcUrl);
     }
 
     private String getPort(Properties properties) {
