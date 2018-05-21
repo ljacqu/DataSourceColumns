@@ -1,17 +1,17 @@
 package ch.jalu.datasourcecolumns.demo;
 
-import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGenerator;
+import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGeneratorFactory;
 import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementResult;
 import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.SimplePreparedStatementResult;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class LoggingStatementGenerator implements PreparedStatementGenerator {
+public class LoggingStatementGeneratorFactory implements PreparedStatementGeneratorFactory {
 
     private final Connection connection;
 
-    public LoggingStatementGenerator(Connection connection) {
+    public LoggingStatementGeneratorFactory(Connection connection) {
         this.connection = connection;
     }
 

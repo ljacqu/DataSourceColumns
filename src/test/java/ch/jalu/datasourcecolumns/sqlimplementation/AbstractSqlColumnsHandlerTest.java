@@ -35,7 +35,7 @@ import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.or;
-import static ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGenerator.fromConnection;
+import static ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGeneratorFactory.fromConnection;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;

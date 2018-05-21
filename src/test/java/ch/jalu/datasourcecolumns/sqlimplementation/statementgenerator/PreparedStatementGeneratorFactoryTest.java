@@ -14,9 +14,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 /**
- * Test for {@link PreparedStatementGenerator}.
+ * Test for {@link PreparedStatementGeneratorFactory}.
  */
-public class PreparedStatementGeneratorTest {
+public class PreparedStatementGeneratorFactoryTest {
 
     @Test
     public void shouldCreateFromConnectionObject() throws SQLException {
@@ -24,11 +24,11 @@ public class PreparedStatementGeneratorTest {
         Connection connection = mock(Connection.class);
         PreparedStatement pst = mock(PreparedStatement.class);
         given(connection.prepareStatement(anyString())).willReturn(pst);
-        PreparedStatementGenerator statementGenerator = PreparedStatementGenerator.fromConnection(connection);
+        PreparedStatementGeneratorFactory generatorFactory = PreparedStatementGeneratorFactory.fromConnection(connection);
         String sql = "SELECT 1 FROM table WHERE name = ?";
 
         // when
-        PreparedStatementResult result = statementGenerator.create(sql);
+        PreparedStatementResult result = generatorFactory.create(sql);
 
         // then
         verify(connection).prepareStatement(sql);

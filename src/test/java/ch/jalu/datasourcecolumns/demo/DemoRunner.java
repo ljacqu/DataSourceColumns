@@ -37,7 +37,7 @@ public class DemoRunner {
         // Create columns handler
         String idName = PersonColumns.NAME.resolveName(configuration);
         ColumnsHandler<Configuration, String> columnsHandler =
-            new SqlColumnsHandler<>(new LoggingStatementGenerator(connection), configuration, "tbl", idName,
+            new SqlColumnsHandler<>(new LoggingStatementGeneratorFactory(connection), configuration, "tbl", idName,
                 new ResultSetValueRetriever<>(configuration), new PredicateSqlGenerator<>(configuration));
 
         // Run demo!
