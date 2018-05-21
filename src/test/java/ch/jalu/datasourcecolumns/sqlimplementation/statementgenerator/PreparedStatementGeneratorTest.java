@@ -1,4 +1,4 @@
-package ch.jalu.datasourcecolumns.sqlimplementation;
+package ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator;
 
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package ch.jalu.datasourcecolumns.sqlimplementation;
+package ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -21,6 +21,6 @@ public interface PreparedStatementGenerator {
      * @return created generator
      */
     static PreparedStatementGenerator fromConnection(Connection con) {
-        return sql -> new PreparedStatementResult(con.prepareStatement(sql));
+        return sql -> new SimplePreparedStatementResult(con.prepareStatement(sql));
     }
 }

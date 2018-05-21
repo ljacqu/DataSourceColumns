@@ -9,6 +9,8 @@ import ch.jalu.datasourcecolumns.data.DataSourceValues;
 import ch.jalu.datasourcecolumns.data.DataSourceValuesImpl;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
 import ch.jalu.datasourcecolumns.predicate.Predicate;
+import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGenerator;
+import ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementResult;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -24,7 +26,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static ch.jalu.datasourcecolumns.sqlimplementation.PreparedStatementGenerator.fromConnection;
+import static ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator.PreparedStatementGenerator.fromConnection;
 
 /**
  * Implementation of {@link ColumnsHandler} for a SQL data source.
@@ -81,7 +83,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final String columnName = isColumnUsed ? column.resolveName(context) : "1";
         final String sql = "SELECT " + columnName + " FROM " + tableName + " WHERE " + idColumn + " = ?;";
 
-        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+        try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+            final PreparedStatement pst = result.getPreparedStatement();
             pst.setObject(1, identifier);
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
@@ -100,7 +103,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final String sql = "SELECT " + (nonEmptyColumns.isEmpty() ? "1" : commaSeparatedList(nonEmptyColumns))
             + " FROM " + tableName + " WHERE " + idColumn + " = ?;";
 
-        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+        try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+            final PreparedStatement pst = result.getPreparedStatement();
             pst.setObject(1, identifier);
             try (ResultSet rs = pst.executeQuery()) {
                 return rs.next()
@@ -123,7 +127,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
             + " FROM " + tableName + " WHERE " + sqlPredicate.getGeneratedSql();
 
         List<T> results = new ArrayList<>();
-        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+        try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+            final PreparedStatement pst = result.getPreparedStatement();
             bindValues(pst, 1, sqlPredicate.getBindings());
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) {
@@ -143,7 +148,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
             + " FROM " + tableName + " WHERE " + sqlPredicate.getGeneratedSql();
 
         List<DataSourceValues> matchingEntries = new ArrayList<>();
-        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+        try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+            final PreparedStatement pst = result.getPreparedStatement();
             bindValues(pst, 1, sqlPredicate.getBindings());
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) {
@@ -162,14 +168,16 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         } else if (value == null && column.useDefaultForNullValue(context)) {
             String sql = "UPDATE " + tableName + " SET " + column.resolveName(context)
                 + " = DEFAULT WHERE " + idColumn + " = ?;";
-            try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+            try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+                final PreparedStatement pst = result.getPreparedStatement();
                 pst.setObject(1, identifier);
                 return performUpdateAction(pst);
             }
         }
         String sql = "UPDATE " + tableName + " SET " + column.resolveName(context)
             + " = ? WHERE " + idColumn + " = ?;";
-        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+        try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+            final PreparedStatement pst = result.getPreparedStatement();
             pst.setObject(1, value);
             pst.setObject(2, identifier);
             return performUpdateAction(pst);
@@ -218,7 +226,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
     public int count(Predicate<C> predicate) throws SQLException {
         GeneratedSqlWithBindings whereResult = predicateSqlGenerator.generateWhereClause(predicate);
         String sql = "SELECT COUNT(1) FROM " + tableName + " WHERE " + whereResult.getGeneratedSql();
-        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+        try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+            final PreparedStatement pst = result.getPreparedStatement();
             bindValues(pst, 1, whereResult.getBindings());
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
@@ -239,7 +248,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final GeneratedSqlWithBindings columnSetList = createColumnsListForUpdate(nonEmptyColumns, valueGetter);
         final String sql = "UPDATE " + tableName + " SET "
             + columnSetList.getGeneratedSql() + " WHERE " + idColumn + " = ?;";
-        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+        try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+            final PreparedStatement pst = result.getPreparedStatement();
             int index = bindValues(pst, 1, columnSetList.getBindings());
             pst.setObject(index, identifier);
             return performUpdateAction(pst);
@@ -256,7 +266,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final GeneratedSqlWithBindings whereClause = predicateSqlGenerator.generateWhereClause(predicate);
         final String sql = "UPDATE " + tableName + " SET " + columnSetList.getGeneratedSql()
             + " WHERE " + whereClause.getGeneratedSql();
-        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+        try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+            final PreparedStatement pst = result.getPreparedStatement();
             int index = bindValues(pst, 1, columnSetList.getBindings());
             bindValues(pst, index, whereClause.getBindings());
             return pst.executeUpdate();
@@ -291,7 +302,8 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
         final GeneratedSqlWithBindings placeholders = createValuePlaceholdersForInsert(nonEmptyColumns, valueGetter);
         final String sql = "INSERT INTO " + tableName + " (" + commaSeparatedList(nonEmptyColumns) + ") "
             + "VALUES(" + placeholders.getGeneratedSql() + ");";
-        try (PreparedStatementResult pst = preparedStatementGenerator.create(sql)) {
+        try (PreparedStatementResult result = preparedStatementGenerator.create(sql)) {
+            final PreparedStatement pst = result.getPreparedStatement();
             bindValues(pst, 1, placeholders.getBindings());
             return performUpdateAction(pst);
         }
@@ -340,12 +352,12 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
      * Wraps {@link PreparedStatement#executeUpdate()} for UPDATE and INSERT statements and returns a boolean
      * based on its return value.
      *
-     * @param pst the prepared statement result
+     * @param pst the prepared statement
      * @return true if one row was updated, false otherwise
      * @throws IllegalStateException if more than one row was updated (should never happen)
      * @throws SQLException on SQL errors
      */
-    protected boolean performUpdateAction(PreparedStatementResult pst) throws SQLException {
+    protected boolean performUpdateAction(PreparedStatement pst) throws SQLException {
         int count = pst.executeUpdate();
         if (count == 1) {
             return true;
@@ -370,12 +382,12 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
      * values to be bound before this method is called). The index at which binding can continue
      * is returned (to allow more values to be bound after calling this method).
      *
-     * @param pst the prepared statement result
+     * @param pst the prepared statement
      * @param startIndex the index at which value binding should begin
      * @param bindings the values to bind
      * @return the index at which binding should continue (if applicable)
      */
-    private int bindValues(PreparedStatementResult pst, int startIndex,
+    private int bindValues(PreparedStatement pst, int startIndex,
                            Collection<Object> bindings) throws SQLException {
         int index = startIndex;
         for (Object binding : bindings) {
