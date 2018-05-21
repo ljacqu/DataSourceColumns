@@ -5,15 +5,16 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * Simple implementation of {@link PreparedStatementGenerator} that closes the prepared statement afterwards.
+ * Simple implementation of {@link PreparedStatementGenerator} when a single, long-living Connection object
+ * should be used to create all prepared statements.
  */
-public class SimplePreparedStatementGenerator implements PreparedStatementGenerator {
+public class SingleConnectionPreparedStatementGenerator implements PreparedStatementGenerator {
 
     private final Connection connection;
     private final String sql;
     private PreparedStatement preparedStatement;
 
-    public SimplePreparedStatementGenerator(Connection connection, String sql) {
+    public SingleConnectionPreparedStatementGenerator(Connection connection, String sql) {
         this.connection = connection;
         this.sql = sql;
     }

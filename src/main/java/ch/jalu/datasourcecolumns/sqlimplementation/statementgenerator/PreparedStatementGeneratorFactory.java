@@ -23,6 +23,16 @@ public interface PreparedStatementGeneratorFactory {
      * @return created generator
      */
     static PreparedStatementGeneratorFactory fromConnection(Connection con) {
-        return sql -> new SimplePreparedStatementGenerator(con, sql);
+        return sql -> new SingleConnectionPreparedStatementGenerator(con, sql);
+    }
+
+    /**
+     * Creates a generator factory which uses the given connection supplier (typically a connection pool).
+     *
+     * @param connectionSupplier the supplier to use
+     * @return created generator
+     */
+    static PreparedStatementGeneratorFactory fromConnectionPool(ConnectionSupplier connectionSupplier) {
+        return sql -> new ConnectionPoolPreparedStatementGenerator(connectionSupplier, sql);
     }
 }
