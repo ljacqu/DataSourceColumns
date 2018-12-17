@@ -6,8 +6,8 @@ import ch.jalu.datasourcecolumns.StandardTypes;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Retrieves values from a SQL {@link ResultSet}.
@@ -17,7 +17,7 @@ import java.util.Map;
 public class ResultSetValueRetriever<C> {
 
     private final C context;
-    private final Map<ColumnType, ResultSetGetter> resultSetGetters = new HashMap<>();
+    private final Map<ColumnType, ResultSetGetter> resultSetGetters = new ConcurrentHashMap<>();
 
     /**
      * Constructor.
