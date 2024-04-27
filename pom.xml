@@ -14,7 +14,7 @@
     <licenses>
         <license>
             <name>MIT License</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <url>https://www.opensource.org/licenses/mit-license.php</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -52,7 +52,7 @@
             <name>ljacqu</name>
             <email>.</email>
             <organization>jalu.ch</organization>
-            <organizationUrl>http://jalu.ch</organizationUrl>
+            <organizationUrl>https://jalu.ch</organizationUrl>
         </developer>
     </developers>
 
@@ -72,7 +72,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.3.0</version>
+                        <version>3.3.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -86,7 +86,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.5.0</version>
+                        <version>3.6.3</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -100,7 +100,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.4</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -217,11 +217,10 @@
             <version>4.0.3</version>
             <scope>test</scope>
         </dependency>
-        <!-- TODO: Move to com.mysql:mysql-connector-j -->
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.33</version>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.3.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
