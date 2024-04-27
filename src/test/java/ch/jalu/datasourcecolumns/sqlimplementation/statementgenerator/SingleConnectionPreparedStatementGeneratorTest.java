@@ -14,7 +14,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * Test for {@link SingleConnectionPreparedStatementGenerator}.
@@ -52,6 +52,6 @@ public class SingleConnectionPreparedStatementGeneratorTest {
         generator.close();
 
         // then
-        verifyZeroInteractions(connection);
+        verifyNoInteractions(connection);
     }
 }

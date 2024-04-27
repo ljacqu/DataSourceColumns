@@ -17,8 +17,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
  * Test for {@link ConnectionPoolPreparedStatementGenerator}.
@@ -61,7 +61,7 @@ public class ConnectionPoolPreparedStatementGeneratorTest {
         generator.close();
 
         // then
-        verifyZeroInteractions(connectionSupplier);
+        verifyNoInteractions(connectionSupplier);
     }
 
 
