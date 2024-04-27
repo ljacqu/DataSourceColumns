@@ -1,6 +1,8 @@
 # Generic data source columns
-
+<!--
+TODO: Fix badges
 [![Build Status](https://travis-ci.org/ljacqu/DataSourceColumns.svg?branch=master)](https://travis-ci.org/ljacqu/DataSourceColumns) [![Coverage Status](https://coveralls.io/repos/github/ljacqu/DataSourceColumns/badge.svg)](https://coveralls.io/github/ljacqu/DataSourceColumns)
+-->
 
 Generates SQL code to insert, update and count values with database columns whose configurations are loaded at runtime.
 It can be defined at runtime what name a column actually has in the SQL database, or whether the column's existence
