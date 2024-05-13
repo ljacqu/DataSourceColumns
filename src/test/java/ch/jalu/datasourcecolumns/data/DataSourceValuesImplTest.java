@@ -3,10 +3,10 @@ package ch.jalu.datasourcecolumns.data;
 import ch.jalu.datasourcecolumns.SampleColumns;
 import org.junit.jupiter.api.Test;
 
-import static ch.jalu.datasourcecolumns.TestUtils.expectException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test for {@link DataSourceValuesImpl}.
@@ -25,7 +25,7 @@ class DataSourceValuesImplTest {
         // then
         assertThat(values.get(SampleColumns.IS_ACTIVE), equalTo(5));
         assertThat(values.get(SampleColumns.NAME), equalTo("test"));
-        expectException(IllegalArgumentException.class, () -> values.get(SampleColumns.IP));
+        assertThrows(IllegalArgumentException.class, () -> values.get(SampleColumns.IP));
     }
 
     @Test
@@ -34,7 +34,7 @@ class DataSourceValuesImplTest {
         DataSourceValuesImpl values = new DataSourceValuesImpl();
 
         // when
-        Exception exception = expectException(IllegalArgumentException.class,
+        Exception exception = assertThrows(IllegalArgumentException.class,
             () -> values.put(SampleColumns.LAST_LOGIN, "test"));
 
         // then

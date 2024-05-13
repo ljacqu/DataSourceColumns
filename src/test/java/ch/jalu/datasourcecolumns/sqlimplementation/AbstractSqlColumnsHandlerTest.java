@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ch.jalu.datasourcecolumns.TestUtils.expectException;
 import static ch.jalu.datasourcecolumns.data.UpdateValues.with;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.and;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eq;
@@ -42,6 +41,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -516,7 +516,7 @@ abstract class AbstractSqlColumnsHandlerTest {
             .build();
 
         // when
-        IllegalStateException ex = expectException(IllegalStateException.class,
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
             () -> handler.insert(values));
 
         // then
@@ -686,7 +686,7 @@ abstract class AbstractSqlColumnsHandlerTest {
     }
 
     private static void verifyThrowsNoValueAvailableException(Runnable runnable) {
-        IllegalArgumentException ex = expectException(IllegalArgumentException.class, runnable::run);
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, runnable::run);
         assertThat(ex.getMessage(), containsString("No value available for column"));
     }
 

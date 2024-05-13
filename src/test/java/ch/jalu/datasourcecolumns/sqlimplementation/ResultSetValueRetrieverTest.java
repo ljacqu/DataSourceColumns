@@ -10,11 +10,11 @@ import org.junit.jupiter.api.Test;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static ch.jalu.datasourcecolumns.TestUtils.expectException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -97,7 +97,7 @@ class ResultSetValueRetrieverTest {
         ColumnType<Object> type = mock(ColumnType.class);
 
         // when
-        IllegalArgumentException ex = expectException(IllegalArgumentException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> valueRetriever.createResultSetGetter(type));
 
         // then
