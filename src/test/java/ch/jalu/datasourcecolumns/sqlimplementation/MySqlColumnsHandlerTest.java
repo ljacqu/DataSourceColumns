@@ -1,6 +1,6 @@
 package ch.jalu.datasourcecolumns.sqlimplementation;
 
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,8 +11,8 @@ import java.util.Properties;
 /**
  * Test for {@link SqlColumnsHandler}, using an external MySQL database.
  */
-@Ignore
-public class MySqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
+@Disabled
+class MySqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
 
     @Override
     protected ConnectionInfo createConnection() throws Exception {

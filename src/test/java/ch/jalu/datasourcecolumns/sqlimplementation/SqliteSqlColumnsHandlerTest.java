@@ -8,7 +8,7 @@ import java.sql.SQLException;
 /**
  * Test for {@link SqlColumnsHandler}, using an in-memory SQLite database.
  */
-public class SqliteSqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
+class SqliteSqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
 
     @Override
     protected ConnectionInfo createConnection() throws SQLException {

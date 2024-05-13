@@ -1,20 +1,20 @@
 package ch.jalu.datasourcecolumns.data;
 
 import ch.jalu.datasourcecolumns.SampleColumns;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static ch.jalu.datasourcecolumns.TestUtils.expectException;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 
 /**
  * Test for {@link DataSourceValuesImpl}.
  */
-public class DataSourceValuesImplTest {
+class DataSourceValuesImplTest {
 
     @Test
-    public void shouldStoreValues() {
+    void shouldStoreValues() {
         // given
         DataSourceValuesImpl values = new DataSourceValuesImpl();
 
@@ -29,7 +29,7 @@ public class DataSourceValuesImplTest {
     }
 
     @Test
-    public void shouldRejectValueOfInvalidType() {
+    void shouldRejectValueOfInvalidType() {
         // given
         DataSourceValuesImpl values = new DataSourceValuesImpl();
 

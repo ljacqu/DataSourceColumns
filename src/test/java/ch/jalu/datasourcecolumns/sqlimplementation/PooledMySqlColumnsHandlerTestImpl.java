@@ -3,15 +3,15 @@ package ch.jalu.datasourcecolumns.sqlimplementation;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 
 import java.io.IOException;
 
 /**
  * Test for {@link SqlColumnsHandler}, using an external MySQL database with a pooled connection.
  */
-@Ignore
-public class PooledMySqlColumnsHandlerTestImpl extends MySqlColumnsHandlerTest {
+@Disabled
+class PooledMySqlColumnsHandlerTestImpl extends MySqlColumnsHandlerTest {
 
     @Override
     protected ConnectionInfo createConnection() throws IOException {

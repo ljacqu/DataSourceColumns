@@ -6,7 +6,7 @@ import com.zaxxer.hikari.HikariDataSource;
 /**
  * Test for {@link SqlColumnsHandler}, using an in-memory H2 database with a database pool.
  */
-public class PooledH2SqlColumnsHandlerTest extends H2SqlColumnsHandlerTest {
+class PooledH2SqlColumnsHandlerTest extends H2SqlColumnsHandlerTest {
 
     @Override
     protected ConnectionInfo createConnection() {

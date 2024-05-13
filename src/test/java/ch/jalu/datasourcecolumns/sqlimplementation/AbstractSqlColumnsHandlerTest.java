@@ -11,9 +11,9 @@ import ch.jalu.datasourcecolumns.data.DataSourceValue;
 import ch.jalu.datasourcecolumns.data.DataSourceValues;
 import ch.jalu.datasourcecolumns.data.UpdateValues;
 import ch.jalu.datasourcecolumns.predicate.Predicate;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -33,6 +33,7 @@ import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.isNull;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.or;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -41,13 +42,12 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration test for {@link SqlColumnsHandler}.
  */
-public abstract class AbstractSqlColumnsHandlerTest {
+abstract class AbstractSqlColumnsHandlerTest {
 
     private static final String TABLE_NAME = "testingdata";
     private static final String ID_COLUMN = "id";
@@ -66,8 +66,8 @@ public abstract class AbstractSqlColumnsHandlerTest {
     private SqlColumnsHandler<SampleContext, Integer> handler;
     private SampleContext context;
 
-    @Before
-    public void setUpConnection() throws Exception {
+    @BeforeEach
+    void setUpConnection() throws Exception {
         connectionInfo = createConnection();
 
         InputStream is = getClass().getClassLoader().getResourceAsStream("sample-database.sql");
@@ -86,8 +86,8 @@ public abstract class AbstractSqlColumnsHandlerTest {
         handler = new SqlColumnsHandler<>(config);
     }
 
-    @After
-    public void tearDownConnection() throws Exception {
+    @AfterEach
+    void tearDownConnection() throws Exception {
         if (connectionInfo != null) {
             connectionInfo.closeConnection();
         }
@@ -104,7 +104,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveSingleValue() throws SQLException {
+    void shouldRetrieveSingleValue() throws SQLException {
         // given / when
         DataSourceValue<String> alexIp = handler.retrieve(1, SampleColumns.IP);
         DataSourceValue<String> emilyIp = handler.retrieve(5, SampleColumns.IP);
@@ -120,7 +120,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldHandleEmptyColumnRetrieval() throws SQLException {
+    void shouldHandleEmptyColumnRetrieval() throws SQLException {
         // given
         context.setEmptyOptions(true, false, false);
 
@@ -136,7 +136,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveMultipleValues() throws SQLException {
+    void shouldRetrieveMultipleValues() throws SQLException {
         // given
         SampleColumns<?>[] columns = { SampleColumns.NAME, SampleColumns.IS_LOCKED, SampleColumns.LAST_LOGIN };
 
@@ -161,7 +161,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldHandleRetrievalOfMultipleValuesIncludingEmpty() throws SQLException {
+    void shouldHandleRetrievalOfMultipleValuesIncludingEmpty() throws SQLException {
         // given
         context.setEmptyOptions(true, false, true);
         SampleColumns<?>[] columns = { SampleColumns.NAME, SampleColumns.IS_LOCKED, SampleColumns.LAST_LOGIN };
@@ -187,7 +187,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveMultipleAllEmptyColumnsSuccessfully() throws SQLException {
+    void shouldRetrieveMultipleAllEmptyColumnsSuccessfully() throws SQLException {
         // given
         context.setEmptyOptions(true, false, true);
         SampleColumns<?>[] columns = { SampleColumns.EMAIL, SampleColumns.LAST_LOGIN };
@@ -207,7 +207,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveValueOfRowsMatchingPredicate() throws SQLException {
+    void shouldRetrieveValueOfRowsMatchingPredicate() throws SQLException {
         // given
         Predicate<SampleContext> predicate = or(eq(SampleColumns.IP, "22.22.22.22"), eq(SampleColumns.IP, "111.111.111.111"))
             .and(isNotNull(SampleColumns.EMAIL));
@@ -220,7 +220,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldHandleOptionalColumnForPredicateRetrieval() throws SQLException {
+    void shouldHandleOptionalColumnForPredicateRetrieval() throws SQLException {
         // given
         context.setEmptyOptions(true, true, false);
         Predicate<SampleContext> predicate = greaterThan(SampleColumns.LAST_LOGIN, 123456L);
@@ -233,7 +233,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldReturnEmptyListForNoRowsFulfillingPredicate() throws SQLException {
+    void shouldReturnEmptyListForNoRowsFulfillingPredicate() throws SQLException {
         // given
         Predicate<SampleContext> predicate = eq(SampleColumns.IP, "111.111.111.111")
             .and(eqIgnoreCase(SampleColumns.EMAIL, "other@test.tld"));
@@ -246,7 +246,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveValuesOfRowsMatchingPredicate() throws SQLException {
+    void shouldRetrieveValuesOfRowsMatchingPredicate() throws SQLException {
         // given
         Predicate<SampleContext> predicate = or(eq(SampleColumns.IP, "22.22.22.22"), eq(SampleColumns.IP, "111.111.111.111"))
             .and(isNotNull(SampleColumns.EMAIL));
@@ -269,7 +269,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldReturnEmptyListForNoRowsMatchingPredicate() throws SQLException {
+    void shouldReturnEmptyListForNoRowsMatchingPredicate() throws SQLException {
         // given
         Predicate<SampleContext> predicate = greaterThan(SampleColumns.ID, 20);
 
@@ -281,7 +281,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldPerformSingleValueUpdate() throws SQLException {
+    void shouldPerformSingleValueUpdate() throws SQLException {
         // given / when
         boolean result1 = handler.update(1, SampleColumns.EMAIL, "mailForAlex@example.org");
         boolean result2 = handler.update(2, SampleColumns.EMAIL, (String) null);
@@ -296,7 +296,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldHandleSingleValueUpdateWithEmptyColumn() throws SQLException {
+    void shouldHandleSingleValueUpdateWithEmptyColumn() throws SQLException {
         // given
         context.setEmptyOptions(true, false, false);
 
@@ -313,7 +313,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldPerformMultiValueUpdate() throws SQLException {
+    void shouldPerformMultiValueUpdate() throws SQLException {
         // given / when
         boolean result1 = handler.update(9,
             with(SampleColumns.IS_LOCKED, 1)
@@ -345,7 +345,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldPerformMultiUpdateWithEmptyColumns() throws SQLException {
+    void shouldPerformMultiUpdateWithEmptyColumns() throws SQLException {
         // given
         context.setEmptyOptions(true, false, true);
 
@@ -370,7 +370,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldPerformMultiUpdateWithAllEmptyColumns() throws SQLException {
+    void shouldPerformMultiUpdateWithAllEmptyColumns() throws SQLException {
         // given
         context.setEmptyOptions(true, true, true);
 
@@ -395,7 +395,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldUpdateWithDependentObject() throws SQLException {
+    void shouldUpdateWithDependentObject() throws SQLException {
         // given
         context.setEmptyOptions(true, false, false);
         SampleDependent dependent = new SampleDependent();
@@ -417,7 +417,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldPerformUpdateWithDefaultForNullValue() throws SQLException {
+    void shouldPerformUpdateWithDefaultForNullValue() throws SQLException {
         assumeTrue(hasSupportForDefaultKeyword());
 
         // given
@@ -435,7 +435,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldPerformMultiUpdateWithDefaultValueForNull() throws SQLException {
+    void shouldPerformMultiUpdateWithDefaultValueForNull() throws SQLException {
         assumeTrue(hasSupportForDefaultKeyword());
 
         // given
@@ -457,7 +457,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldInsertValues() throws SQLException {
+    void shouldInsertValues() throws SQLException {
         // given
         UpdateValues<SampleContext> values =
             with(SampleColumns.ID, 414)
@@ -480,7 +480,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldHandleInsertWithEmptyColumns() throws SQLException {
+    void shouldHandleInsertWithEmptyColumns() throws SQLException {
         // given
         context.setEmptyOptions(true, false, true);
         UpdateValues<SampleContext> values =
@@ -507,7 +507,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldThrowExceptionForInsertWithNoNonEmptyColumns() {
+    void shouldThrowExceptionForInsertWithNoNonEmptyColumns() {
         // given
         context.setEmptyOptions(true, true, false);
         UpdateValues<SampleContext> values =
@@ -524,7 +524,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldPerformInsertWithDependentObject() throws SQLException {
+    void shouldPerformInsertWithDependentObject() throws SQLException {
         // given
         context.setEmptyOptions(true, false, false);
         SampleDependent dependent = new SampleDependent();
@@ -551,7 +551,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldInsertUsingDefaultKeywordForNullValues() throws SQLException {
+    void shouldInsertUsingDefaultKeywordForNullValues() throws SQLException {
         assumeTrue(hasSupportForDefaultKeyword());
 
         // given
@@ -580,7 +580,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldCountWithPredicates() throws SQLException {
+    void shouldCountWithPredicates() throws SQLException {
         // given / when
         int emailCount = handler.count(eq(SampleColumns.EMAIL, "other@test.tld"));
         int ipLastLoginCount = handler.count(isNull(SampleColumns.IP).and(
@@ -599,7 +599,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldCountWithCaseInsensitivePredicate() throws SQLException {
+    void shouldCountWithCaseInsensitivePredicate() throws SQLException {
         // given
         Predicate<SampleContext> predicate = eqIgnoreCase(SampleColumns.EMAIL, "TEST@example.com")
             .or(eqIgnoreCase(SampleColumns.NAME, "louis"));
@@ -612,7 +612,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveValuesAfterCaseInsensitiveCheck() throws SQLException {
+    void shouldRetrieveValuesAfterCaseInsensitiveCheck() throws SQLException {
         // given
         Predicate<SampleContext> predicate = or( // TODO: create or() with varargs
             notEqIgnoreCase(SampleColumns.NAME, "HANS").and(eqIgnoreCase(SampleColumns.EMAIL, "OTHER@test.tld")),
@@ -628,7 +628,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldRetrieveFloatsAndDoubles() throws SQLException {
+    void shouldRetrieveFloatsAndDoubles() throws SQLException {
         // given / when
         DataSourceValue<Double> ratioDouble = handler.retrieve(4, COL_RATIO_DOUBLE);
         DataSourceValue<Float> ratioFloat = handler.retrieve(4, COL_RATIO_FLOAT);
@@ -643,7 +643,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldUpdateByPredicate() throws SQLException {
+    void shouldUpdateByPredicate() throws SQLException {
         // given
         Predicate<SampleContext> predicate = eq(SampleColumns.IP, "22.22.22.22").and(isNotNull(SampleColumns.EMAIL));
 
@@ -660,7 +660,7 @@ public abstract class AbstractSqlColumnsHandlerTest {
     }
 
     @Test
-    public void shouldUpdateMultipleValuesByPredicate() throws SQLException {
+    void shouldUpdateMultipleValuesByPredicate() throws SQLException {
         // given
         Predicate<SampleContext> predicate = and(
             greaterThanEquals(SampleColumns.LAST_LOGIN, 732452L),

@@ -1,24 +1,24 @@
 package ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 /**
  * Test for {@link PreparedStatementGeneratorFactory}.
  */
-public class PreparedStatementGeneratorFactoryTest {
+class PreparedStatementGeneratorFactoryTest {
 
     @Test
-    public void shouldCreateFromConnectionObject() throws SQLException {
+    void shouldCreateFromConnectionObject() throws SQLException {
         // given
         Connection connection = mock(Connection.class);
         PreparedStatement pst = mock(PreparedStatement.class);
@@ -35,7 +35,7 @@ public class PreparedStatementGeneratorFactoryTest {
     }
 
     @Test
-    public void shouldCreateFromConnectionPool() throws SQLException {
+    void shouldCreateFromConnectionPool() throws SQLException {
         // given
         Connection connection = mock(Connection.class);
         PreparedStatement pst = mock(PreparedStatement.class);
