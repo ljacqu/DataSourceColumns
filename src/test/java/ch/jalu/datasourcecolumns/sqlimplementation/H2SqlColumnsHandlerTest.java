@@ -8,7 +8,7 @@ import java.sql.SQLException;
 /**
  * Test for {@link SqlColumnsHandler}, using an in-memory H2 database.
  */
-public class H2SqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
+class H2SqlColumnsHandlerTest extends AbstractSqlColumnsHandlerTest {
 
     @Override
     protected ConnectionInfo createConnection() throws SQLException {

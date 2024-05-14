@@ -2,20 +2,20 @@ package ch.jalu.datasourcecolumns.data;
 
 import ch.jalu.datasourcecolumns.SampleColumns;
 import ch.jalu.datasourcecolumns.SampleContext;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static ch.jalu.datasourcecolumns.TestUtils.expectException;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test for {@link UpdateValuesTest}.
  */
-public class UpdateValuesTest {
+class UpdateValuesTest {
 
     @Test
-    public void shouldThrowForUnregisteredValue() {
+    void shouldThrowForUnregisteredValue() {
         // given
         UpdateValues<SampleContext> values = UpdateValues
             .with(SampleColumns.IP, "124.4.4")
@@ -24,6 +24,6 @@ public class UpdateValuesTest {
         // when / then
         assertThat(values.get(SampleColumns.IP), equalTo("124.4.4"));
         assertThat(values.get(SampleColumns.LAST_LOGIN), nullValue());
-        expectException(IllegalArgumentException.class, () -> values.get(SampleColumns.IS_ACTIVE));
+        assertThrows(IllegalArgumentException.class, () -> values.get(SampleColumns.IS_ACTIVE));
     }
 }

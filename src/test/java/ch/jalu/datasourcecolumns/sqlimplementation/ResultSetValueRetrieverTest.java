@@ -5,28 +5,28 @@ import ch.jalu.datasourcecolumns.ColumnType;
 import ch.jalu.datasourcecolumns.SampleColumns;
 import ch.jalu.datasourcecolumns.SampleContext;
 import ch.jalu.datasourcecolumns.StandardTypes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static ch.jalu.datasourcecolumns.TestUtils.expectException;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 /**
  * Test for {@link ResultSetValueRetriever}.
  */
-public class ResultSetValueRetrieverTest {
+class ResultSetValueRetrieverTest {
 
     private ResultSetValueRetriever<SampleContext> valueRetriever = createRetriever();
 
     @Test
-    public void shouldRetrieveIntegerValues() throws SQLException {
+    void shouldRetrieveIntegerValues() throws SQLException {
         // given
         ResultSet rs = mock(ResultSet.class);
         given(rs.getInt("id")).willReturn(4242);
@@ -43,7 +43,7 @@ public class ResultSetValueRetrieverTest {
     }
 
     @Test
-    public void shouldRetrieveStringValues() throws SQLException {
+    void shouldRetrieveStringValues() throws SQLException {
         // given
         ResultSet rs = mock(ResultSet.class);
         given(rs.getString("username")).willReturn("Test3");
@@ -59,7 +59,7 @@ public class ResultSetValueRetrieverTest {
     }
 
     @Test
-    public void shouldRetrieveLongValues() throws SQLException {
+    void shouldRetrieveLongValues() throws SQLException {
         // given
         ResultSet rs = mock(ResultSet.class);
         given(rs.getLong("last_login")).willReturn(355L).willReturn(0L);
@@ -75,7 +75,7 @@ public class ResultSetValueRetrieverTest {
     }
 
     @Test
-    public void shouldRetrieveBooleanValues() throws SQLException {
+    void shouldRetrieveBooleanValues() throws SQLException {
         // given
         Column<Boolean, SampleContext> col = new BooleanColumn();
         ResultSet rs = mock(ResultSet.class);
@@ -92,12 +92,12 @@ public class ResultSetValueRetrieverTest {
     }
 
     @Test
-    public void shouldThrowForUnknownType() {
+    void shouldThrowForUnknownType() {
         // given
         ColumnType<Object> type = mock(ColumnType.class);
 
         // when
-        IllegalArgumentException ex = expectException(IllegalArgumentException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> valueRetriever.createResultSetGetter(type));
 
         // then

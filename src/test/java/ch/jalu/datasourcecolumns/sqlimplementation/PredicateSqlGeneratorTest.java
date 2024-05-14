@@ -4,7 +4,7 @@ import ch.jalu.datasourcecolumns.SampleColumns;
 import ch.jalu.datasourcecolumns.SampleContext;
 import ch.jalu.datasourcecolumns.predicate.AlwaysTruePredicate;
 import ch.jalu.datasourcecolumns.predicate.Predicate;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.and;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.eq;
@@ -18,22 +18,23 @@ import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.lessThanEqu
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEq;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.notEqIgnoreCase;
 import static ch.jalu.datasourcecolumns.predicate.StandardPredicates.or;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 /**
  * Test for {@link PredicateSqlGenerator}.
  */
-public class PredicateSqlGeneratorTest {
+class PredicateSqlGeneratorTest {
 
     private final SampleContext context = new SampleContext();
     private final PredicateSqlGenerator<SampleContext> predicateGenerator = new PredicateSqlGenerator<>(context);
 
     @Test
-    public void shouldGenerateSqlForComparingPredicates() {
+    void shouldGenerateSqlForComparingPredicates() {
         // given
         Predicate<SampleContext> predicate1 = greaterThan(SampleColumns.IS_LOCKED, 2)
             .and(greaterThanEquals(SampleColumns.LAST_LOGIN, 1000L));
@@ -57,7 +58,7 @@ public class PredicateSqlGeneratorTest {
     }
 
     @Test
-    public void shouldGenerateSqlForComparingPredicatesWithEmptyColumns() {
+    void shouldGenerateSqlForComparingPredicatesWithEmptyColumns() {
         // given
         context.setEmptyOptions(true, true, false);
 
@@ -83,7 +84,7 @@ public class PredicateSqlGeneratorTest {
     }
 
     @Test
-    public void shouldGenerateSqlForNullPredicates() {
+    void shouldGenerateSqlForNullPredicates() {
         // given
         context.setEmptyOptions(true, false, true);
 
@@ -109,7 +110,7 @@ public class PredicateSqlGeneratorTest {
     }
 
     @Test
-    public void shouldGenerateSqlForAlwaysTruePredicate() {
+    void shouldGenerateSqlForAlwaysTruePredicate() {
         // given
         Predicate<SampleContext> predicate = new AlwaysTruePredicate<>();
 
@@ -121,19 +122,18 @@ public class PredicateSqlGeneratorTest {
         assertThat(result.getBindings(), empty());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void shouldThrowForUnknownPredicate() {
+    @Test
+    void shouldThrowForUnknownPredicate() {
         // given
         Predicate<SampleContext> unknownPredicate = mock(Predicate.class);
 
-        // when
-        predicateGenerator.generateWhereClause(unknownPredicate);
-
-        // then - expect exception to be thrown
+        // when / then
+        assertThrows(IllegalStateException.class,
+            () -> predicateGenerator.generateWhereClause(unknownPredicate));
     }
 
     @Test
-    public void shouldGenerateEqualsIgnoreCasePredicate() {
+    void shouldGenerateEqualsIgnoreCasePredicate() {
         // given
         context.setEmptyOptions(true, false, true);
 
@@ -160,7 +160,7 @@ public class PredicateSqlGeneratorTest {
     }
 
     @Test
-    public void shouldGenerateEqualsIgnoreCasePredicateWithSpecialCase() {
+    void shouldGenerateEqualsIgnoreCasePredicateWithSpecialCase() {
         // given
         PredicateSqlGenerator<SampleContext> predicateGenerator = new PredicateSqlGenerator<>(context, true);
         context.setEmptyOptions(true, false, true);

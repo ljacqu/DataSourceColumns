@@ -1,16 +1,16 @@
 package ch.jalu.datasourcecolumns.sqlimplementation.statementgenerator;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
@@ -23,10 +23,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 /**
  * Test for {@link ConnectionPoolPreparedStatementGenerator}.
  */
-public class ConnectionPoolPreparedStatementGeneratorTest {
+class ConnectionPoolPreparedStatementGeneratorTest {
 
     @Test
-    public void shouldCreateOnlyOnePreparedStatement() throws SQLException {
+    void shouldCreateOnlyOnePreparedStatement() throws SQLException {
         // given
         Connection connection = mock(Connection.class);
         given(connection.prepareStatement(anyString())).willReturn(mock(PreparedStatement.class));
@@ -51,7 +51,7 @@ public class ConnectionPoolPreparedStatementGeneratorTest {
     }
 
     @Test
-    public void shouldHandleNullStatement() throws SQLException {
+    void shouldHandleNullStatement() throws SQLException {
         // given
         String sql = "sql code";
         ConnectionSupplier connectionSupplier = mock(ConnectionSupplier.class);
@@ -66,7 +66,7 @@ public class ConnectionPoolPreparedStatementGeneratorTest {
 
 
     @Test
-    public void shouldCreateFromConnectionPool() throws SQLException {
+    void shouldCreateFromConnectionPool() throws SQLException {
         // given
         Connection connection = mock(Connection.class);
         given(connection.prepareStatement(anyString())).willReturn(mock(PreparedStatement.class));
@@ -87,7 +87,7 @@ public class ConnectionPoolPreparedStatementGeneratorTest {
     }
 
     @Test
-    public void shouldCloseConnectionIfPreparedStatementInitFails() throws SQLException {
+    void shouldCloseConnectionIfPreparedStatementInitFails() throws SQLException {
         // given
         Connection connection = mock(Connection.class);
         given(connection.prepareStatement(anyString())).willThrow(SQLException.class);
@@ -108,7 +108,7 @@ public class ConnectionPoolPreparedStatementGeneratorTest {
     }
 
     @Test
-    public void shouldClosePreparedStatementEvenIfClosingConnectionFails() throws SQLException {
+    void shouldClosePreparedStatementEvenIfClosingConnectionFails() throws SQLException {
         // given
         Connection connection = mock(Connection.class);
         given(connection.prepareStatement(anyString())).willReturn(mock(PreparedStatement.class));
@@ -134,7 +134,7 @@ public class ConnectionPoolPreparedStatementGeneratorTest {
     }
 
     @Test
-    public void shouldCloseConnectionEvenIfClosingPreparedStatementFails() throws SQLException {
+    void shouldCloseConnectionEvenIfClosingPreparedStatementFails() throws SQLException {
         // given
         Connection connection = mock(Connection.class);
         PreparedStatement pst = mock(PreparedStatement.class);

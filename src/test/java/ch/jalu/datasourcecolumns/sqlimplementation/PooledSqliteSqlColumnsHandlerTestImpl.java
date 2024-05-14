@@ -8,7 +8,7 @@ import javax.sql.DataSource;
 /**
  * Test for {@link SqlColumnsHandler}, using an in-memory SQLite database with a database pool.
  */
-public class PooledSqliteSqlColumnsHandlerTestImpl extends SqliteSqlColumnsHandlerTest {
+class PooledSqliteSqlColumnsHandlerTestImpl extends SqliteSqlColumnsHandlerTest {
 
     @Override
     protected ConnectionInfo createConnection() {
