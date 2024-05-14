@@ -15,7 +15,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,10 +71,11 @@ abstract class AbstractSqlColumnsHandlerTest {
     void setUpConnection() throws Exception {
         connectionInfo = createConnection();
 
-        InputStream is = getClass().getClassLoader().getResourceAsStream("sample-database.sql");
+        Path initializationScriptFile = TestUtils.getResourceFile("/sample-database.sql");
+        String initializationScript = String.join("\n", Files.readAllLines(initializationScriptFile));
         // We can only run one statement per Statement.execute() so we split
         // the string by ";\n" as to get the individual statements
-        String[] sqlInitialize = TestUtils.readToString(is).split(";(\\r?)\\n");
+        String[] sqlInitialize = initializationScript.split(";(\\r?)\\n");
 
         connectionInfo.executeStatements("DROP TABLE IF EXISTS " + TABLE_NAME);
         connectionInfo.executeStatements(sqlInitialize);
