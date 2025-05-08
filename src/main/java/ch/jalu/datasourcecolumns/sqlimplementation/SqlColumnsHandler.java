@@ -376,7 +376,7 @@ public class SqlColumnsHandler<C, I> implements ColumnsHandler<C, I> {
 
     /**
      * Returns a Set of columns without any that should be skipped
-     * (as determined by {@link Column#isColumnUsed}.
+     * (as determined by {@link Column#isColumnUsed}).
      *
      * @param cols the columns to filter
      * @param <E> the column extension type
