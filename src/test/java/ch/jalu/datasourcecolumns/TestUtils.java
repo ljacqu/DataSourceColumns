@@ -1,26 +1,24 @@
 package ch.jalu.datasourcecolumns;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public final class TestUtils {
 
     private TestUtils() {
     }
 
-    public static String readToString(InputStream inputStream) {
-        try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) != -1) {
-                result.write(buffer, 0, length);
-            }
-            // StandardCharsets.UTF_8.name() > JDK 7
-            return result.toString(StandardCharsets.UTF_8.name());
-        } catch (IOException e) {
-            throw new UnsupportedOperationException(e);
+    public static Path getResourceFile(String name) {
+        URL resourceUrl = TestUtils.class.getResource(name);
+        if (resourceUrl == null) {
+            throw new IllegalArgumentException("Unknown resource with path '" + name + "'");
+        }
+        try {
+            return Paths.get(resourceUrl.toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Failed to get resource with path '" + name + "'", e);
         }
     }
 }
