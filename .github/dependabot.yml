@@ -11,6 +11,8 @@ updates:
         versions: [">= 5"]
       - dependency-name: "org.mockito:mockito-junit-jupiter"
         versions: [">= 5"]
+      - dependency-name: "com.zaxxer:HikariCP"
+        versions: [">= 6"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
