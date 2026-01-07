@@ -8,11 +8,13 @@ updates:
     target-branch: dependencies
     ignore:
       - dependency-name: "org.mockito:mockito-core"
-        versions: [">= 5"]
+        versions: ">= 5"
       - dependency-name: "org.mockito:mockito-junit-jupiter"
-        versions: [">= 5"]
+        versions: ">= 5"
       - dependency-name: "com.zaxxer:HikariCP"
-        versions: [">= 6"]
+        versions: ">= 6"
+      - dependency-name: "org.junit.jupiter:junit-jupiter"
+        versions: ">= 6"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
