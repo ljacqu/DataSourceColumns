@@ -12,11 +12,14 @@ updates:
       - dependency-name: "org.mockito:mockito-junit-jupiter"
         versions: ">= 5"
       - dependency-name: "com.zaxxer:HikariCP"
-        versions: ">= 6"
+        versions: ">= 5"
+      - dependency-name: "com.h2database:h2"
+        versions: ">= 2.3"
       - dependency-name: "org.junit.jupiter:junit-jupiter"
         versions: ">= 6"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: daily
-    target-branch: master
+    target-branch: dependencies
